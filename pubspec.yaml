@@ -1,0 +1,170 @@
+name: smart_bell
+description: A new Flutter application.
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+version: 1.0.2+2
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  aws_iot_api: ^1.2.0
+  carousel_slider: ^4.0.0
+  connectivity_plus: ^2.2.1
+  cupertino_icons: ^1.0.2
+  dart_ping: ^6.1.1
+  dart_ping_ios: ^1.0.0
+  data_connection_checker: ^0.3.4
+  device_info: ^2.0.3
+  firebase_core: ^1.10.6
+  firebase_crashlytics: ^2.4.4
+  flutter:
+    sdk: flutter
+  flutter_staggered_grid_view: ^0.6.1
+  flutter_svg: ^1.0.3
+  flutter_swipe_action_cell: ^2.1.0
+  flutter_time_picker_spinner: ^2.0.0
+  geolocator: ^8.2.0
+  google_fonts: ^2.1.0
+  http: ^0.13.3
+  intl: ^0.17.0
+  jwt_decoder: ^2.0.1
+  location: ^4.2.0
+  lottie: ^1.2.1
+  mqtt_client: ^9.6.5
+  network_info_plus: ^2.1.3
+  numberpicker: ^2.1.1
+  open_settings: ^2.0.2
+  open_url: ^2.0.0
+  package_info_plus: ^1.0.6
+  pin_code_fields: ^7.1.0
+  provider: ^6.0.2
+  # qr_code_scanner: ^0.7.0
+  qr_code_scanner:
+    git:
+      url: https://github.com/xeinebiu/qr_code_scanner.git
+      ref: fix_break_changes_platform
+  responsive_framework: ^0.1.5
+  scoped_model: ^1.1.0
+  shared_preferences: ^2.0.13
+  showcaseview: ^1.1.4
+  sizer: ^2.0.15
+  thingsboard_client: ^1.0.1
+  tutorial_coach_mark: ^1.2.0
+  url_launcher: ^6.0.10
+  velocity_x: ^3.4.0
+  wifi_configuration_2: ^1.1.2+1
+  wifi_iot: ^0.3.3
+  amplify_flutter: ^0.5.0
+  amplify_auth_cognito: ^0.5.0
+  amplify_analytics_pinpoint: ^0.5.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter_icons:
+  android: true
+
+  ios: true
+  image_path: "assets/images/app_icon.png"
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+# The following section is specific to Flutter.
+flutter:
+
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/images/main_page_bg.png
+    - assets/images/bg_image.png
+    - assets/images/app_icon.png
+    - assets/images/setup_bg.png
+    - assets/images/qr_code.png
+    - assets/images/qr_frame.png
+    - assets/images/wifi_bg.png
+    - assets/images/wifi_icon.png
+    - assets/images/wifi_router.png
+    - assets/images/connected_bg.png
+    - assets/images/bell.png
+    - assets/images/calendar_icon.png
+    - assets/images/change_password.png
+    - assets/images/clock_icon.png
+    - assets/images/delete.png
+    - assets/images/edit.png
+    - assets/images/faq.png
+    - assets/images/home_icon.png
+    - assets/images/logout.png
+    - assets/images/network_dia_bg.png
+    - assets/images/network_diagnosis.png
+    - assets/images/notification_icon.png
+    - assets/images/notification_yellow.png
+    - assets/images/time_icon.png
+    - assets/images/user_icon.png
+    - assets/images/profile_bg.png
+    - assets/images/reset.png
+    - assets/images/switch_off.png
+    - assets/images/switch_on.png
+    - assets/images/main_page_logo.svg
+    - assets/images/icon.svg
+    - assets/images/add_device.png
+    - assets/images/device.png
+    - assets/images/app_icon.json
+    - assets/images/bell.json
+    - assets/images/logo_bell.png
+    - assets/images/wifi_info_1.png
+    - assets/images/wifi_info_2.png
+    - assets/images/wifi_info_3.png
+    - assets/images/wifi_change.png
+    - assets/images/tour/screen1.png
+    - assets/images/tour/screen2.png
+    - assets/images/tour/screen3.png
+    - assets/images/tour/screen4.png
+    - assets/images/tour/screen5.png
+    - assets/certs/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/assets-and-images/#resolution-aware.
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/assets-and-images/#from-packages
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf  
+        - asset: assets/fonts/Montserrat-Medium.ttf
+        - asset: assets/fonts/Montserrat-Light.ttf
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/custom-fonts/#from-packages
+analyzer:
+  strong-mode: true
+  language:
+    enableSuperMixins: true

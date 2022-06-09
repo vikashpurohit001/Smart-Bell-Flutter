@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-smartbell-dev-152254-authRole",
+      "UnauthRoleArn": "arn:aws:iam::941275879372:role/amplify-smartbell-dev-152254-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::941275879372:role/amplify-smartbell-dev-152254-authRole",
+      "Region": "eu-central-1",
+      "DeploymentBucketName": "amplify-smartbell-dev-152254-deployment",
+      "UnauthRoleName": "amplify-smartbell-dev-152254-unauthRole",
+      "StackName": "amplify-smartbell-dev-152254",
+      "StackId": "arn:aws:cloudformation:eu-central-1:941275879372:stack/amplify-smartbell-dev-152254/9c128a50-e647-11ec-8909-06e170c53460",
+      "AmplifyAppId": "diwbcr879tukb"
+    },
+    "categories": {
+      "auth": {
+        "smartbell274780fe": {}
+      }
+    }
+  }
+}
