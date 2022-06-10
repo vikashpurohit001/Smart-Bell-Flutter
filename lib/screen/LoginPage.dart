@@ -40,19 +40,21 @@ class _LoginPageState extends BaseState<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _configureAmplify();
+    Future.delayed(Duration.zero, _configureAmplify);
   }
 
   Future<void> _configureAmplify() async {
-    try {
-      // Add the following line to add Auth plugin to your app.
-      await Amplify.addPlugins(
-          [AmplifyAuthCognito(), AmplifyAnalyticsPinpoint()]);
+    if (!Amplify.isConfigured) {
+      try {
+        // Add the following line to add Auth plugin to your app.
+        await Amplify.addPlugins(
+            [AmplifyAuthCognito(), AmplifyAnalyticsPinpoint()]);
 
-      // call Amplify.configure to use the initialized categories in your app
-      await Amplify.configure(amplifyconfig);
-    } on AmplifyAlreadyConfiguredException catch (e) {
-    } on Exception catch (e) {}
+        // call Amplify.configure to use the initialized categories in your app
+        await Amplify.configure(amplifyconfig);
+      } on AmplifyAlreadyConfiguredException catch (e) {
+      } on Exception catch (e) {}
+    }
   }
 
   checkSession() async {

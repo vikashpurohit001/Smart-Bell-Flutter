@@ -4,6 +4,7 @@ import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
+import 'package:smart_bell/amplifyconfiguration.dart';
 import 'package:smart_bell/screen/LoginPage.dart';
 import 'package:smart_bell/screen/RegisterationPage.dart';
 import 'package:smart_bell/utilities/Navigators.dart';
@@ -26,19 +27,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     if (Platform.isAndroid) {
       WiFiForIoTPlugin.forceWifiUsage(false);
-      Future.delayed(Duration.zero, () {
-        checkSession();
-      });
     }
-  }
-
-  checkSession() async {
-    // try {
-    //   AuthSession session = await Amplify.Auth.fetchAuthSession();
-    //   if (session.isSignedIn) {
-    //     Navigators.push(context, ShowCase());
-    //   }
-    // } catch (e) {}
   }
 
   @override

@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info/device_info.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
+import 'package:smart_bell/screen/HomeScreen.dart';
 import 'package:smart_bell/screen/WifiConnectErrorScreen.dart';
 import 'package:smart_bell/screen/WifiScanScreen.dart';
 import 'package:smart_bell/ui/BaseState.dart';
@@ -89,37 +90,20 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                   style: TextStyles.dialogPositiveButton(context),
                 ),
                 onPressed: () {
+                  Navigator.pop(context);
                   if (deviceTitleController.text.isNotEmpty) {
                     showLoaderDialog(context);
-                    RestServerApi()
-                        .addDeviceToServer(context, deviceTitleController.text)
-                        .then((value) {
+                    RestServerApi.createDevice(deviceTitleController.text)
+                        .then((response) {
                       hideLoader();
-                      if (value != null &&
-                          value is Map &&
-                          value.containsKey("token")) {
-                        return;
-                      }
-                      Navigator.of(context).pop();
-                      if (value is String) {
+                      if (response['status'] == true) {
                         CommonUtil.showOkDialog(
                             context: mContext,
-                            message: value,
+                            message: response['message'],
                             onClick: () {
-                              Navigator.pop(mContext);
+                              // Navigator.pop(mContext);
+                              Navigators.push(mContext, HomeScreen());
                             });
-                      } else if (value is Map) {
-                        Map<String, dynamic> result = value;
-                        String deviceToken =
-                            CommonUtil.getJsonVal(result, 'deviceToken');
-                        String deviceId =
-                            CommonUtil.getJsonVal(result, 'deviceId');
-                        if (deviceToken != null) {
-                          askManualOrAutoConnect(deviceToken, deviceId,
-                              deviceTitleController.text);
-                        } else {
-                          RestServerApi().deleteDevice(context, deviceId);
-                        }
                       }
                     });
                   } else {}

@@ -103,18 +103,21 @@ class RestServerApi {
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(
-          <String, String>{"Action": "get_list", "Device": '${username}_Bell'}),
+          <String, String>{"Action": "get_list", "Device": '${username}'}),
     );
     Map<String, dynamic> decodedResponse = jsonDecode(result.body);
     List<DeviceBell> finalResult = [];
     for (String name in decodedResponse['files']) {
       finalResult.add(DeviceBell(name));
     }
+    print(finalResult);
     return finalResult;
   }
 
   static Future<dynamic> createDevice(String name) async {
+    print('Helloooo');
     String deviceName = await CommonUtil.generateDeviceName(name);
+    print(deviceName);
     var result = await http.post(
       Uri.parse(kDeviceURL),
       headers: <String, String>{
@@ -126,6 +129,14 @@ class RestServerApi {
         "Device": deviceName
       }),
     );
+    await CommonUtil.createCertificate(
+        jsonDecode(result.body)['files'][0][deviceName]['certificatePem'],
+        deviceName);
+    print(jsonDecode(result.body)['files'][0][deviceName]['certificatePem']);
+    await CommonUtil.createKey(
+        jsonDecode(result.body)['files'][0][deviceName]['keyPair']
+            ['PrivateKey'],
+        deviceName);
     return {'status': true, 'message': 'Device Created Successfully'};
   }
 
@@ -188,7 +199,6 @@ class RestServerApi {
     };
     String url = '/api/customer/${userId}/deviceInfos';
     Map<String, dynamic> res = await _netUtil.get(context, url, request: par);
-    print(res);
 
     if (res != null) {
       if (res.containsKey(APIConstants.RES_TOKEN) &&
@@ -209,7 +219,7 @@ class RestServerApi {
       Map<String, dynamic> res = await _netUtil.get(
           null, APIConstants.URL_TENANT,
           host: APIConstants.BASE_URL_TENANT_API);
-      print(res);
+
       if (res != null) {
         AppLoginResponse loginResponse = AppLoginResponse();
         loginResponse.token =
@@ -221,7 +231,7 @@ class RestServerApi {
         Map<String, dynamic> response = await _netUtil.get(
             null, "/api/deviceProfileInfo/default",
             token: loginResponse.token);
-        print(response);
+
         if (response != null) {
           DeviceProfileInfo profileInfo = DeviceProfileInfo.fromJson(response);
           SessionManager().setDefaultProfileId(profileInfo.id.id);
@@ -277,7 +287,6 @@ class RestServerApi {
           Map<String, dynamic> res = await _netUtil.post(
               context, "/api/auth/token",
               token: token, body: {"refreshToken": rToken});
-          print(res);
         } else {
           _netUtil.handleSessionTimeout(context);
         }
@@ -297,7 +306,7 @@ class RestServerApi {
       "title": email,
     };
     String token = await getTenantToken(context);
-    print(token);
+
     Map<String, dynamic> res =
         await _netUtil.post(null, '/api/customer', body: param, token: token);
 
@@ -334,7 +343,7 @@ class RestServerApi {
     }
     Map<String, dynamic> userRes = await _netUtil.post(null, '/api/user',
         body: userParam, query: 'sendActivationMail=true', token: token);
-    print(userRes);
+
     if (userRes != null) {
       if (userRes.containsKey(APIConstants.RES_TOKEN) &&
           userRes[APIConstants.RES_TOKEN] ==
@@ -355,7 +364,7 @@ class RestServerApi {
   ) async {
     Map<String, dynamic> res = await _netUtil.get(context, "/",
         port: 80, host: NetworkUtil.BASE_LOCAL_URL, scheme: NetworkUtil.HTTP);
-    print(res);
+
     if (res != null) {
       List<String> keys = res.keys.toList();
       return keys;
@@ -370,7 +379,7 @@ class RestServerApi {
         host: NetworkUtil.BASE_LOCAL_URL,
         port: 80,
         scheme: NetworkUtil.HTTP);
-    print(res);
+
     return res;
   }
 
@@ -387,7 +396,7 @@ class RestServerApi {
         host: NetworkUtil.BASE_LOCAL_URL,
         port: 80,
         scheme: NetworkUtil.HTTP);
-    print(res);
+
     if (res != null) {
       data = IotWifiConfigData.fromJson(res);
     }
@@ -424,7 +433,7 @@ class RestServerApi {
     }
     Map<String, dynamic> res = await _netUtil.post(context, '/api/device',
         body: param, token: tenantToken);
-    print(res);
+
     if (res != null) {
       if (res.containsKey("token") && res["token"] == "Expired") {
         return res;
@@ -455,7 +464,7 @@ class RestServerApi {
       context,
       '/api/device/$url',
     );
-    print(res);
+
     if (res != null) {
       if (res.containsKey("token") && res["token"] == "Expired") {
         return res;
@@ -471,7 +480,7 @@ class RestServerApi {
     Map<String, dynamic> res = await _netUtil.post(
         context, '/api/plugins/telemetry/DEVICE/$deviceId/CLIENT_SCOPE',
         body: attributes);
-    print(res);
+
     if (res.containsKey("token") && res["token"] == "Expired") {
       return res;
     }
@@ -483,7 +492,7 @@ class RestServerApi {
     Map<String, dynamic> res = await _netUtil.post(
         context, '/api/plugins/telemetry/DEVICE/$deviceId/SERVER_SCOPE',
         body: attributes);
-    print(res);
+
     if (res.containsKey("token") && res["token"] == "Expired") {
       return res;
     }
@@ -495,7 +504,7 @@ class RestServerApi {
     Map<String, dynamic> res = await _netUtil.post(
         context, '/api/plugins/telemetry/DEVICE/$deviceToken/SHARED_SCOPE',
         body: attributes);
-    print(res);
+
     if (res.containsKey("token") && res["token"] == "Expired") {
       return res;
     }
@@ -510,7 +519,7 @@ class RestServerApi {
     };
     Map<String, dynamic> res =
         await _netUtil.post(context, '/api/auth/changePassword', body: param);
-    print(res);
+
     if (res != null) {
       LoginResponse loginResponse = LoginResponse.fromJson(res);
       if (loginResponse.token != null) {
@@ -533,10 +542,10 @@ class RestServerApi {
     Map<String, dynamic> param = {
       "email": email,
     };
-    print(param);
+
     Map<String, dynamic> res = await _netUtil
         .post(context, '/api/noauth/resetPasswordByEmail', body: param);
-    print(res);
+
     if (res != null) {
       String message = CommonUtil.getJsonVal(res, 'message');
       if (message != null) {
@@ -553,7 +562,7 @@ class RestServerApi {
       context,
       '/api/auth/logout',
     );
-    print(res);
+
     if (res != null) {
       String message = CommonUtil.getJsonVal(res, 'message');
       if (message != null) {
@@ -569,7 +578,7 @@ class RestServerApi {
     try {
       dynamic res = await _netUtil.get(context, '/smartbell/app/$deviceId',
           host: APIConstants.BASE_URL_TENANT_API);
-      print(res);
+
       if (res != null) {
         if (res is Map &&
             res.containsKey("token") &&
@@ -590,7 +599,7 @@ class RestServerApi {
       BuildContext context, String deviceToken) async {
     dynamic res = await _netUtil.get(context,
         '/api/plugins/telemetry/DEVICE/$deviceToken/values/attributes/SERVER_SCOPE');
-    print("Attri $res");
+
     return res;
   }
 
@@ -598,7 +607,7 @@ class RestServerApi {
       BuildContext context, String deviceToken) async {
     Map<String, dynamic> res =
         await _netUtil.get(context, '/api/v1/$deviceToken/attributes');
-    print("Attri $res");
+
     if (res != null) {
       if (res.containsKey("token") && res["token"] == "Expired") {
         return res;
@@ -656,7 +665,7 @@ class RestServerApi {
       sessionList.sort((a, b) =>
           a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
       deviceAttributes.sessionList = sessionList;
-      print(res);
+
       return deviceAttributes;
     } else {
       return null;
@@ -668,7 +677,7 @@ class RestServerApi {
       String tenantToken = await getTenantToken(context);
       Map<String, dynamic> res = await _netUtil
           .delete(context, '/api/device/$deviceId', token: tenantToken);
-      print(res);
+
       if (res != null) {
         if (res.containsKey("token") && res["token"] == "Expired") {
           return res;

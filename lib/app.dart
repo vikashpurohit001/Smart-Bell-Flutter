@@ -18,32 +18,55 @@ import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'amplifyconfiguration.dart';
 
 class MyApplication extends StatefulWidget {
-  final bool _isAuthenticated;
   final Map<String, dynamic> recentDevice;
 
-  MyApplication(this._isAuthenticated, this.recentDevice);
+  MyApplication(this.recentDevice);
 
   @override
   State<MyApplication> createState() => _MyApplicationState();
 }
 
 class _MyApplicationState extends State<MyApplication> {
+  bool authenticated = false;
+
   @override
   void initState() {
     super.initState();
-    _configureAmplify();
+    _configurationHelper();
+  }
+
+  void _configurationHelper() async {
+    await _configureAmplify();
+  }
+
+  checkSession() async {
+    try {
+      AuthSession session = await Amplify.Auth.fetchAuthSession();
+      if (session.isSignedIn) {
+        setState(() {
+          authenticated = true;
+        });
+      }
+    } catch (e) {
+      print('Could not fetch Session $e');
+    }
   }
 
   Future<void> _configureAmplify() async {
-    try {
-      // Add the following line to add Auth plugin to your app.
-      await Amplify.addPlugins(
-          [AmplifyAuthCognito(), AmplifyAnalyticsPinpoint()]);
-
-      // call Amplify.configure to use the initialized categories in your app
-      await Amplify.configure(amplifyconfig);
-    } on AmplifyAlreadyConfiguredException catch (e) {
-    } on Exception catch (e) {}
+    if (!Amplify.isConfigured) {
+      try {
+        await Amplify.addPlugin(AmplifyAuthCognito());
+        await Amplify.configure(amplifyconfig);
+        if (Amplify.isConfigured) {
+          await checkSession();
+        }
+      } on AmplifyAlreadyConfiguredException {
+        print(
+            "Amplify was already configured. Looks like app restarted on android.");
+      } catch (e) {
+        print("Oh No" + e);
+      }
+    }
   }
 
   @override
@@ -63,10 +86,10 @@ class _MyApplicationState extends State<MyApplication> {
           initialRoute: '/',
           debugShowCheckedModeBanner: false,
           routes: {
-            '/': (context) => widget._isAuthenticated
-                ? widget.recentDevice != null
+            '/': (context) => authenticated
+                ? (widget.recentDevice != null
                     ? WifiConnectErrorScreen()
-                    : ShowCase()
+                    : ShowCase())
                 : MainPage(),
             '/home': (context) => ShowCase(),
             '/main': (context) => MainPage(),

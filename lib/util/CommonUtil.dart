@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/AppText.dart';
 import 'package:flutter/cupertino.dart';
@@ -185,5 +188,32 @@ class CommonUtil {
   static Future<String> generateDeviceName(String name) async {
     String username = await getCurrentLoggedInUsername();
     return '${username}_${name}';
+  }
+
+  static Future<void> createCertificate(String data, String deviceName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('/${directory.path}/$deviceName.crt');
+    await file.writeAsString('$data');
+  }
+
+  static Future<void> createKey(String data, String deviceName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    print(directory.path);
+    final file = File('${directory.path}/$deviceName.pem.key');
+    await file.writeAsString('$data');
+  }
+
+  static Future<String> readKey(String deviceName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$deviceName.pem.key');
+    final contents = await file.readAsString();
+    return contents;
+  }
+
+  static Future<String> readCertificate(String deviceName) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$deviceName.crt');
+    final contents = await file.readAsString();
+    return contents;
   }
 }

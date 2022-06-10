@@ -9,7 +9,6 @@ import 'package:smart_bell/util/SessionManager.dart';
 import 'package:flutter/material.dart';
 
 import 'app.dart';
-import 'net/RestServerApi.dart';
 
 void main() async {
   await runZonedGuarded(() async {
@@ -19,17 +18,17 @@ void main() async {
       DeviceOrientation.portraitDown,
     ]);
 
-    await Firebase.initializeApp();
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
-    RestServerApi().getTenantAuthToken();
-    final _isAuthenticated = await new SessionManager().isUserLogin();
+    // await Firebase.initializeApp();
+    // FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+    // RestServerApi().getTenantAuthToken();
+    // final _isAuthenticated = await new SessionManager().isUserLogin();
     final Map<String, dynamic> recentDevice =
         await SessionManager().getRecentDeviceInfo();
     if (Platform.isIOS) {
       DartPingIOS.register();
     }
-    runApp(MyApplication(_isAuthenticated, recentDevice));
+    runApp(MyApplication(recentDevice));
   }, (error, stackTrace) {
-    FirebaseCrashlytics.instance.recordError(error, stackTrace);
+    // FirebaseCrashlytics.instance.recordError(error, stackTrace);
   });
 }

@@ -61,10 +61,6 @@ Future<MqttServerClient> connectWithMqtt(SessionData) async {
     final sessionData1 = sessionData.toString();
     builder1.addString(sessionData1);
 
-    print(sessionData1);
-    print('sessionData');
-    print(SessionData);
-    print('SessionData');
     client.publishMessage('esp32_test', MqttQos.atMostOnce, builder1.payload);
   };
 

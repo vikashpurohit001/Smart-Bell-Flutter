@@ -516,6 +516,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                       await isInternetAvailable(
                           showPopUp: true,
                           onResult: (isInternet) async {
+                            print("Internet Available");
                             if (isInternet) {
                               showLoaderDialog(context);
                               dynamic value =
