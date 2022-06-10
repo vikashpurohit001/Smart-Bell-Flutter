@@ -1,10 +1,10 @@
 {
   "version": "1",
   "cognitoConfig": {
-    "identityPoolName": "smartbell274780fe_identitypool_274780fe",
+    "identityPoolName": "bellsmart3cff8514_identitypool_3cff8514",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "smartb274780fe",
-    "userPoolName": "smartbell274780fe_userpool_274780fe",
+    "resourceNameTruncated": "bellsm3cff8514",
+    "userPoolName": "bellsmart3cff8514_userpool_3cff8514",
     "autoVerifiedAttributes": [
       "email"
     ],
@@ -31,10 +31,10 @@
     "userpoolClientReadAttributes": [
       "email"
     ],
-    "userpoolClientLambdaRole": "smartb274780fe_userpoolclient_lambda_role",
+    "userpoolClientLambdaRole": "bellsm3cff8514_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "274780fe",
-    "resourceName": "smartbell274780fe",
+    "sharedId": "3cff8514",
+    "resourceName": "bellsmart3cff8514",
     "authSelections": "identityPoolAndUserPool",
     "useDefault": "default",
     "usernameAttributes": [
