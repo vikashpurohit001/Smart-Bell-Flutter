@@ -25,14 +25,16 @@ Widget BellIcon({bool isActive, bool isPaused}) => Image.asset(
       width: 4.h,
     );
 
-Widget DeviceName(context, DeviceBell _data) => Flexible(
-      child: Text(
-        '${_data.name}',
-        style: _data.isPaused
-            ? Theme.of(context).textTheme.headline1.copyWith(color: Colors.grey)
-            : Theme.of(context).textTheme.headline1,
-      ),
-    );
+Widget DeviceName(context, DeviceBell _data) {
+  return Flexible(
+    child: Text(
+      '${_data.name}',
+      style: _data.isPaused
+          ? Theme.of(context).textTheme.headline1.copyWith(color: Colors.grey)
+          : Theme.of(context).textTheme.headline1,
+    ),
+  );
+}
 
 Widget IconWidget(context, {Function() onPressed, DeviceBell data}) =>
     IconButton(

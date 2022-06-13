@@ -216,4 +216,11 @@ class CommonUtil {
     final contents = await file.readAsString();
     return contents;
   }
+
+  static Future<String> extractDeviceName(String deviceName) async {
+    String username = await getCurrentLoggedInUsername();
+    String name = deviceName.split('${username}_')[1];
+    name = name.split('.json')[0];
+    return name;
+  }
 }

@@ -98,13 +98,8 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                         .then((response) {
                       hideLoader();
                       if (response['status'] == true) {
-                        CommonUtil.showOkDialog(
-                            context: mContext,
-                            message: response['message'],
-                            onClick: () {
-                              // Navigator.pop(mContext);
-                              Navigators.push(mContext, HomeScreen());
-                            });
+                        showSnackBar(response['message']);
+                        Navigator.pop(context);
                       }
                     });
                   } else {}
