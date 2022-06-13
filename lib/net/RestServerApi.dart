@@ -108,7 +108,10 @@ class RestServerApi {
     Map<String, dynamic> decodedResponse = jsonDecode(result.body);
     List<DeviceBell> finalResult = [];
     for (String name in decodedResponse['files']) {
-      finalResult.add(DeviceBell(name));
+      String username = await CommonUtil.getCurrentLoggedInUsername();
+      String extractedName = name.split('${username}_')[1];
+      extractedName = extractedName.split('.json')[0];
+      finalResult.add(DeviceBell(extractedName));
     }
     print(finalResult);
     return finalResult;

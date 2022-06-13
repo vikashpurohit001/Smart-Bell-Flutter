@@ -41,7 +41,7 @@ class SessionDataScreen extends StatefulWidget {
 
 class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   List<SessionData> sessionList = [];
-  bool isLoading = true;
+  bool isLoading = false;
   String deviceToken;
   String lastSyncTime;
   bool isInternetIssue = false;
@@ -56,7 +56,8 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void initState() {
     deviceToken = widget.deviceToken;
 
-    getDataFromServer();
+    // getDataFromServer();
+    _getDataFromServer();
     super.initState();
   }
 
@@ -160,6 +161,16 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
     //   client.disconnect();
     // }
     super.dispose();
+  }
+
+  _getDataFromServer() async {
+    setState(() {
+      isLoading = true;
+    });
+    // Get Initial Data {API to be made}
+    setState(() {
+      isLoading = false;
+    });
   }
 
   getDataFromServer() {

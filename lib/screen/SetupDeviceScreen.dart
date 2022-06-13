@@ -18,6 +18,7 @@ import 'package:smart_bell/widgets/AppText.dart';
 import 'package:smart_bell/widgets/InputTextField.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:thingsboard_client/thingsboard_client.dart';
 import 'package:wifi_configuration_2/wifi_configuration_2.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:sizer/sizer.dart';
@@ -97,13 +98,8 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                         .then((response) {
                       hideLoader();
                       if (response['status'] == true) {
-                        CommonUtil.showOkDialog(
-                            context: mContext,
-                            message: response['message'],
-                            onClick: () {
-                              // Navigator.pop(mContext);
-                              Navigators.push(mContext, HomeScreen());
-                            });
+                        showSnackBar(response['message']);
+                        Navigator.pop(context);
                       }
                     });
                   } else {}

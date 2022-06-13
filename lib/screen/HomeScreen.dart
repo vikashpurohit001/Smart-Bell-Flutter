@@ -287,7 +287,8 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     Widget bellIcon =
         BellIcon(isActive: _data.isActive, isPaused: _data.isPaused);
 
-    Widget deviceName = DeviceName(context, _data);
+    var deviceName = DeviceName(context, _data);
+
     Widget editIconItem = IconWidget(context, onPressed: () {
       editDeviceName(_data);
     }, data: _data);
