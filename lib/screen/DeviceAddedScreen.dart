@@ -5,15 +5,15 @@ import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/AppElevatedButton.dart';
 import 'package:smart_bell/widgets/AppText.dart';
 import 'package:flutter/material.dart';
+import 'package:thingsboard_client/thingsboard_client.dart';
 
 import 'SessionDataScreen.dart';
 
 class DeviceAddedScreen extends StatelessWidget {
-  String deviceToken, deviceId;
+  String Username;
   bool isNewConnection;
 
-  DeviceAddedScreen(
-      {Key key, this.deviceToken, this.deviceId, this.isNewConnection})
+  DeviceAddedScreen({Key key, this.Username, this.isNewConnection})
       : super(key: key);
 
   @override
@@ -62,7 +62,7 @@ class DeviceAddedScreen extends StatelessWidget {
                       Navigators.push(
                           context,
                           SessionDataScreen(
-                            deviceToken: deviceToken,
+                            Username: Username,
                             deviceData: device,
                           ));
                     },

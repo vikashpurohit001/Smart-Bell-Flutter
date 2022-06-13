@@ -18,6 +18,7 @@ import 'package:smart_bell/widgets/AppText.dart';
 import 'package:smart_bell/widgets/InputTextField.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:thingsboard_client/thingsboard_client.dart';
 import 'package:wifi_configuration_2/wifi_configuration_2.dart';
 import 'package:wifi_iot/wifi_iot.dart';
 import 'package:sizer/sizer.dart';
@@ -116,8 +117,8 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
     );
   }
 
-  askManualOrAutoConnect(String deviceToken, deviceId, deviceName) async {
-    SessionManager().saveRecentDeviceInfo(deviceId, deviceToken, deviceName);
+  askManualOrAutoConnect(String Username) async {
+    SessionManager().saveRecentDeviceInfo(Username);
     showDialog<bool>(
       context: context,
       builder: (context) {
@@ -156,7 +157,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  connectToWifi(deviceToken, deviceId, deviceName);
+                  connectToWifi(Username);
                 },
               ),
               TextButton(
@@ -167,7 +168,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigators.pushAndRemoveUntil(
-                      context, WifiScanScreen(deviceToken: deviceToken));
+                      context, WifiScanScreen(Username: Username));
                 },
               ),
             ],
@@ -177,7 +178,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
     );
   }
 
-  connectToWifi(String deviceToken, deviceId, String deviceName) async {
+  connectToWifi(String Username) async {
     String ssid = "Smart Bell";
     String password = "password";
 
@@ -204,7 +205,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
           if (value) {
             hideLoader();
             Navigators.pushAndRemoveUntil(
-                context, WifiScanScreen(deviceToken: deviceToken));
+                context, WifiScanScreen(Username: Username));
           } else {
             hideLoader();
             Navigators.pushAndRemoveUntil(context, WifiConnectErrorScreen());
@@ -212,7 +213,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
         }).catchError((onError) {
           hideLoader();
           Navigators.pushAndRemoveUntil(
-              context, WifiScanScreen(deviceToken: deviceToken));
+              context, WifiScanScreen(Username: Username));
         });
       });
     } else {

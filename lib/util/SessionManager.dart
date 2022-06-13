@@ -27,6 +27,8 @@ class SessionManager {
       '$PREFIX.RECENT.PREF_KEY_DEVICE_TOKEN';
   static const String RECENT_PREF_KEY_DEVICE_NAME =
       '$PREFIX.RECENT.PREF_KEY_DEVICE_NAME';
+  static const String RECENT_PREF_KEY_USERNAME =
+      '$PREFIX.RECENT.PREF_KEY_USERNAME';
 
   static const String WIFI_PREF_KEY_WIFI_INFO =
       '$PREFIX.WIFI.PREF_KEY_WIFI_INFO';
@@ -185,11 +187,11 @@ class SessionManager {
     return getStringData(PREF_KEY_DEFAULT_PROFILE_ID);
   }
 
-  Future<bool> saveRecentDeviceInfo(deviceId, deviceToken, deviceName) async {
+  Future<bool> saveRecentDeviceInfo(Username) async {
     final SharedPreferences _prefs = await _mPref;
-    _prefs.setString(RECENT_PREF_KEY_DEVICE_ID, deviceId);
-    _prefs.setString(RECENT_PREF_KEY_DEVICE_TOKEN, deviceToken);
-    _prefs.setString(RECENT_PREF_KEY_DEVICE_NAME, deviceName);
+    _prefs.setString(RECENT_PREF_KEY_USERNAME, Username);
+    // _prefs.setString(RECENT_PREF_KEY_DEVICE_TOKEN, deviceToken);
+    // _prefs.setString(RECENT_PREF_KEY_DEVICE_NAME, deviceName);
     return true;
   }
 

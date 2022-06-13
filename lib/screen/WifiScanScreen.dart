@@ -18,9 +18,9 @@ import 'package:sizer/sizer.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 
 class WifiScanScreen extends StatefulWidget {
-  String deviceToken,deviceId;
+  String Username;
 
-  WifiScanScreen({Key key, this.deviceToken,this.deviceId}) : super(key: key);
+  WifiScanScreen({Key key, this.Username}) : super(key: key);
 
   @override
   _WifiScanScreenState createState() => _WifiScanScreenState();
@@ -28,12 +28,15 @@ class WifiScanScreen extends StatefulWidget {
 
 class _WifiScanScreenState extends BaseState<WifiScanScreen> {
   List<String> wifis = [];
-  List<String> imgList = ["assets/images/wifi_info_1.png","assets/images/wifi_info_2.png","assets/images/wifi_info_3.png"];
+  List<String> imgList = [
+    "assets/images/wifi_info_1.png",
+    "assets/images/wifi_info_2.png",
+    "assets/images/wifi_info_3.png"
+  ];
   bool isLoading = true;
 
   @override
   void initState() {
-
     registerWifi();
     callAPI();
     super.initState();
@@ -45,7 +48,7 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
   }
 
   void callAPI() {
-    if(Platform.isAndroid) {
+    if (Platform.isAndroid) {
       WiFiForIoTPlugin.forceWifiUsage(true);
     }
     isLoading = true;
@@ -54,7 +57,7 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
       if (value != null) {
         wifis = value;
       } else {
-       showSnackBar('No list found',isError: true);
+        showSnackBar('No list found', isError: true);
       }
       setState(() {
         isLoading = false;
@@ -63,7 +66,8 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
       setState(() {
         isLoading = false;
       });
-      showSnackBar('Error fetching Wifi list. Please try again later.',isError: true);
+      showSnackBar('Error fetching Wifi list. Please try again later.',
+          isError: true);
     });
   }
 
@@ -92,8 +96,7 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                       EdgeInsets.only( bottom: 2.h, top: 2.h),
+                  padding: EdgeInsets.only(bottom: 2.h, top: 2.h),
                   child: Row(
                     children: [
                       backWidget,
@@ -103,16 +106,15 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
                     ],
                   ),
                 ),
-                if(wifis.isEmpty)
-                Spacer(),
-                if(wifis.isEmpty)
+                if (wifis.isEmpty) Spacer(),
+                if (wifis.isEmpty)
                   CarouselSlider(
                       items: imgList
                           .map((item) => Image.asset(item, fit: BoxFit.cover))
                           .toList(),
                       options: CarouselOptions(
                         height: 50.h,
-                        aspectRatio: 16/9,
+                        aspectRatio: 16 / 9,
                         viewportFraction: 0.8,
                         initialPage: 0,
                         enableInfiniteScroll: true,
@@ -123,12 +125,10 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
                         autoPlayCurve: Curves.easeInOutQuart,
                         enlargeCenterPage: true,
                         scrollDirection: Axis.horizontal,
-                      )
-                  ),
-                if(wifis.isEmpty)
-                Spacer(),
+                      )),
+                if (wifis.isEmpty) Spacer(),
                 Padding(
-                  padding:  EdgeInsets.only(left: 2.h, right: 2.h),
+                  padding: EdgeInsets.only(left: 2.h, right: 2.h),
                   child: Text(
                     (wifis.isEmpty)
                         ? 'Connect with Smart bell to get Wifi List. Please connect with Smart Bell manually and Retry.'
@@ -136,59 +136,60 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
                     style: TextStyles.black14Normal,
                   ),
                 ),
-                if(wifis.isEmpty)
-                Spacer(),
-                (wifis.isEmpty)?AppElevatedButtons(
-                  "Retry",
-                  onPressed: () {
-                    callAPI();
-                  },
-                ):Expanded(
-                  child: isLoading
-                          ? AppIndicator()
-                          : Container(
-                              child: ListView.builder(
-                                  itemCount: wifis.length,
-                                  itemBuilder: (context, index) {
-                                    String wifiData = wifis.elementAt(index);
-                                    return InkWell(
-                                      onTap: () {
-                                        Navigators.push(
-                                            context,
-                                            AuthWifiScreen(
-                                                wifiNetwork: wifiData,
-                                                deviceToken:
-                                                    widget.deviceToken,deviceId:widget.deviceId));
-                                      },
-                                      child: Padding(
-                                        padding:  EdgeInsets.symmetric(horizontal: 2.h,vertical: 1.h),
-                                        child: Wrap(
-                                          direction: Axis.horizontal,
-                                          crossAxisAlignment:
-                                              WrapCrossAlignment.center,
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 3.h,
-                                              backgroundColor: Colors.white,
-                                              child: Icon(
-                                                Icons.wifi,
-                                                size: 3.h,
-                                                color: Theme.of(context)
-                                                    .primaryColor,
+                if (wifis.isEmpty) Spacer(),
+                (wifis.isEmpty)
+                    ? AppElevatedButtons(
+                        "Retry",
+                        onPressed: () {
+                          callAPI();
+                        },
+                      )
+                    : Expanded(
+                        child: isLoading
+                            ? AppIndicator()
+                            : Container(
+                                child: ListView.builder(
+                                    itemCount: wifis.length,
+                                    itemBuilder: (context, index) {
+                                      String wifiData = wifis.elementAt(index);
+                                      return InkWell(
+                                        onTap: () {
+                                          Navigators.push(
+                                              context,
+                                              AuthWifiScreen(
+                                                  wifiNetwork: wifiData,
+                                                  Username: widget.Username));
+                                        },
+                                        child: Padding(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 2.h, vertical: 1.h),
+                                          child: Wrap(
+                                            direction: Axis.horizontal,
+                                            crossAxisAlignment:
+                                                WrapCrossAlignment.center,
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 3.h,
+                                                backgroundColor: Colors.white,
+                                                child: Icon(
+                                                  Icons.wifi,
+                                                  size: 3.h,
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
+                                                ),
                                               ),
-                                            ),
-                                            SizedBox(
-                                              width: 2.h,
-                                            ),
-                                            Text(
-                                              wifis.elementAt(index),
-                                              style: TextStyles().black12Normal)
-                                          ],
+                                              SizedBox(
+                                                width: 2.h,
+                                              ),
+                                              Text(wifis.elementAt(index),
+                                                  style: TextStyles()
+                                                      .black12Normal)
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  })),
-                )
+                                      );
+                                    })),
+                      )
               ],
             ),
           ],
@@ -196,5 +197,4 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
       ),
     );
   }
-
 }

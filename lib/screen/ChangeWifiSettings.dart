@@ -6,6 +6,7 @@ import 'package:smart_bell/dao/DeviceList.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/screen/ChangeWifiTour.dart';
 import 'package:smart_bell/ui/BaseState.dart';
+import 'package:smart_bell/util/CommonUtil.dart';
 import 'package:smart_bell/utilities/Navigators.dart';
 import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/AppElevatedButton.dart';
@@ -26,6 +27,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
   List<DeviceList> _data = [];
   bool isLoading = true;
   bool isNoInternet = false;
+  String Username = null;
 
   @override
   void initState() {
@@ -36,32 +38,35 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
     super.initState();
   }
 
+  getUsername() async {
+    return await CommonUtil.getCurrentLoggedInUsername();
+  }
+
   getDeviceInformation() async {
     setState(() {
       isLoading = true;
       isNoInternet = false;
     });
-     await isInternetAvailable(onResult: (isInternet){
-       if (isInternet) {
-         RestServerApi().getDeviceList(context).then((value) {
-           isLoading = false;
+    await isInternetAvailable(onResult: (isInternet) {
+      if (isInternet) {
+        RestServerApi().getDeviceList(context).then((value) {
+          isLoading = false;
 
-           if (value != null && value is List) {
-             _data = value;
-           }
-           setState(() {});
-         }).catchError((error) {
-           isNoInternet = true;
-           isLoading = false;
-           setState(() {});
-         });
-       } else {
-         isNoInternet = true;
-         isLoading = false;
-         setState(() {});
-       }
-     });
-
+          if (value != null && value is List) {
+            _data = value;
+          }
+          setState(() {});
+        }).catchError((error) {
+          isNoInternet = true;
+          isLoading = false;
+          setState(() {});
+        });
+      } else {
+        isNoInternet = true;
+        isLoading = false;
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -142,10 +147,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
                   return InkWell(
                     child: DeviceDataWidget(_data.elementAt(index)),
                     onTap: () async {
-                      String deviceId = _data.elementAt(index).deviceId;
-                      String deviceToken = await getDeviceToken(deviceId);
-                      showWifiColor(
-                          deviceToken: deviceToken, deviceId: deviceId);
+                      showWifiColor(Username: Username);
                     },
                   );
                 },
@@ -156,7 +158,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
     );
   }
 
-  showWifiColor({String deviceToken, String deviceId}) {
+  showWifiColor({String Username}) {
     showDialog(
         context: context,
         builder: (builder) {
@@ -189,10 +191,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
                           ),
                           onPressed: () {
                             Navigators.push(
-                                context,
-                                WifiScanScreen(
-                                    deviceToken: deviceToken,
-                                    deviceId: deviceId));
+                                context, WifiScanScreen(Username: Username));
                           },
                         ),
                       ),
@@ -248,7 +247,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
         child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              _data.label != null ? _data.label:"",
+              _data.label != null ? _data.label : "",
               style: TextStyles().grey12Normal,
             )));
 

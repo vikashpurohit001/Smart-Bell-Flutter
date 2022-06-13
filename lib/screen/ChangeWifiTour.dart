@@ -8,10 +8,9 @@ import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/AppElevatedButton.dart';
 
 class WifiDisplayColor extends StatelessWidget {
-  String deviceToken, deviceId;
+  String Username;
 
-  WifiDisplayColor({Key key, this.deviceToken, this.deviceId})
-      : super(key: key);
+  WifiDisplayColor({Key key, this.Username}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +33,8 @@ class WifiDisplayColor extends StatelessWidget {
                   Navigators.push(
                       context,
                       WifiScanScreen(
-                          deviceToken: deviceToken, deviceId: deviceId));
+                        Username: Username,
+                      ));
                 },
               ),
               SizedBox(
@@ -58,10 +58,9 @@ class WifiDisplayColor extends StatelessWidget {
 }
 
 class TurnOnResetButton extends StatelessWidget {
-  String deviceToken, deviceId;
+  String Username;
 
-  TurnOnResetButton({Key key, this.deviceToken, this.deviceId})
-      : super(key: key);
+  TurnOnResetButton({Key key, this.Username}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +101,8 @@ class TurnOnResetButton extends StatelessWidget {
                   Navigators.push(
                       context,
                       WifiScanScreen(
-                          deviceToken: deviceToken, deviceId: deviceId));
+                        Username: Username,
+                      ));
                 },
               ),
               SizedBox(

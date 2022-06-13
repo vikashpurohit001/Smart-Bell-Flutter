@@ -17,9 +17,9 @@ import 'package:wifi_configuration_2/wifi_configuration_2.dart' as WifiConfig;
 import 'package:wifi_iot/wifi_iot.dart';
 
 class AuthWifiScreen extends StatefulWidget {
-  String wifiNetwork, deviceToken, deviceId;
+  String wifiNetwork, Username;
 
-  AuthWifiScreen({Key key, this.wifiNetwork, this.deviceToken, this.deviceId});
+  AuthWifiScreen({Key key, this.wifiNetwork, this.Username});
 
   @override
   _AuthWifiScreenState createState() => _AuthWifiScreenState();
@@ -42,7 +42,7 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
     if (Platform.isAndroid) {
       WiFiForIoTPlugin.forceWifiUsage(true);
     }
-    if (widget.deviceId == null) {
+    if (widget.Username == null) {
       getRecentDeviceData();
     }
     _wifiController.text = widget.wifiNetwork;
@@ -80,7 +80,7 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
             ListView(
               children: [
                 Padding(
-                  padding:  EdgeInsets.only( top: 2.h),
+                  padding: EdgeInsets.only(top: 2.h),
                   child: Row(
                     children: [
                       backWidget,
@@ -91,11 +91,10 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
                   ),
                 ),
                 Padding(
-                  padding:  EdgeInsets.only(right: 2.h, top: 1.h,left: 2.h),
+                  padding: EdgeInsets.only(right: 2.h, top: 1.h, left: 2.h),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       SizedBox(
                         height: 10.h,
                       ),
@@ -110,7 +109,7 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
                               height: 15.h,
                             ),
                             Padding(
-                              padding:  EdgeInsets.only(top: 3.h),
+                              padding: EdgeInsets.only(top: 3.h),
                               child: Image.asset(
                                 'assets/images/wifi_icon.png',
                                 width: 5.h,
@@ -172,18 +171,15 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
     setState(() {
       isLoading = true;
     });
-    String deviceId =
-        recentDevice == null ? widget.deviceId : recentDevice['deviceId'];
     RestServerApi()
-        .configureDevice(context, _wifiController.text, pass.text,
-            widget.deviceToken, deviceId)
+        .configureDevice(
+            context, _wifiController.text, pass.text, widget.Username)
         .then((value) async {
       setState(() {
         isLoading = false;
       });
       Map<String, dynamic> wifiInfo = {
         "ssid": _wifiController.text.trim(),
-        "deviceId": deviceId
       };
       SessionManager().saveWifiDetails(wifiInfo);
       if (value != null && value.isSuccess) {
@@ -191,8 +187,8 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
           WiFiForIoTPlugin.forceWifiUsage(false);
         }
         bool isNewConnection;
-        if (widget.deviceId == null) {
-          SessionManager().saveRecentDeviceInfo(null, null, null);
+        if (widget.Username == null) {
+          SessionManager().saveRecentDeviceInfo(null);
           isNewConnection = true;
         } else {
           isNewConnection = false;
@@ -200,8 +196,7 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
         Navigators.pushAndRemoveUntil(
             context,
             DeviceAddedScreen(
-              deviceToken: widget.deviceToken,
-              deviceId: deviceId,
+              Username: widget.Username,
               isNewConnection: isNewConnection,
             ));
       } else {

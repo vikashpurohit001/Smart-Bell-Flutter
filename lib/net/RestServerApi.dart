@@ -372,8 +372,8 @@ class RestServerApi {
     return null;
   }
 
-  Future<dynamic> postToken(BuildContext context, deviceToken, deviceId) async {
-    var param = {APIConstants.RES_TOKEN: deviceToken, "deviceId": deviceId};
+  Future<dynamic> postToken(BuildContext context, Username) async {
+    var param = {"Username": Username};
     Map<String, dynamic> res = await _netUtil.post(context, '/token',
         body: param,
         host: NetworkUtil.BASE_LOCAL_URL,
@@ -383,9 +383,9 @@ class RestServerApi {
     return res;
   }
 
-  Future<IotWifiConfigData> configureDevice(BuildContext context, String ssid,
-      password, deviceToken, deviceId) async {
-    await postToken(context, deviceToken, deviceId);
+  Future<IotWifiConfigData> configureDevice(
+      BuildContext context, String ssid, password, Username) async {
+    await postToken(context, Username);
     var param = {
       "ssid": ssid,
       "password": password,

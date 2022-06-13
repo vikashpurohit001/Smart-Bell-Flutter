@@ -41,7 +41,7 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
   }
 
   connectToWifi() async {
-    String deviceToken = recentDevice['deviceToken'];
+    String Username = await CommonUtil.getCurrentLoggedInUsername();
     String ssid = "Smart Bell";
     String password = "password";
     print(ssid);
@@ -50,7 +50,7 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
     }
     String connectedSSid = await WiFiForIoTPlugin.getSSID();
     if (connectedSSid == ssid) {
-      Navigators.push(context, WifiScanScreen(deviceToken: deviceToken));
+      Navigators.push(context, WifiScanScreen(Username: Username));
     } else {
       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       bool canAutoConnect = true;
@@ -73,7 +73,7 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
             if (value) {
               hideLoader();
               Navigators.pushAndRemoveUntil(
-                  context, WifiScanScreen(deviceToken: deviceToken));
+                  context, WifiScanScreen(Username: Username));
             } else {
               hideLoader();
               Navigators.pushAndRemoveUntil(context, WifiConnectErrorScreen());
@@ -81,7 +81,7 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
           }).catchError((onError) {
             hideLoader();
             Navigators.pushAndRemoveUntil(
-                context, WifiScanScreen(deviceToken: deviceToken));
+                context, WifiScanScreen(Username: Username));
           });
         });
       } else {
@@ -193,7 +193,7 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
                         dynamic value = await RestServerApi()
                             .deleteDevice(context, recentDevice['deviceId']);
                         if (!(value is Map)) {
-                          SessionManager().saveRecentDeviceInfo("", "", "");
+                          SessionManager().saveRecentDeviceInfo("");
                           print("Hello");
                           hideLoader();
                           Navigators.pushAndRemoveUntil(

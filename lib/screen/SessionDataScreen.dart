@@ -30,9 +30,9 @@ import 'DashboardScreen.dart';
 
 class SessionDataScreen extends StatefulWidget {
   DeviceBell deviceData;
-  String deviceToken;
+  String Username;
 
-  SessionDataScreen({Key key, this.deviceData, this.deviceToken})
+  SessionDataScreen({Key key, this.deviceData, this.Username})
       : super(key: key);
 
   @override
@@ -42,7 +42,7 @@ class SessionDataScreen extends StatefulWidget {
 class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   List<SessionData> sessionList = [];
   bool isLoading = true;
-  String deviceToken;
+  String Username;
   String lastSyncTime;
   bool isInternetIssue = false;
   String wifiSSID = null;
@@ -54,7 +54,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
 
   @override
   void initState() {
-    deviceToken = widget.deviceToken;
+    Username = widget.Username;
 
     getDataFromServer();
     super.initState();
@@ -166,7 +166,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
     isLoading = true;
     isInternetIssue = false;
     setState(() {});
-    if (deviceToken == null) {
+    if (Username == null) {
       // RestServerApi()
       //     .getDeviceToken(context, widget.deviceData.deviceId)
       //     .then((value) {
@@ -188,8 +188,8 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
     }
   }
 
-  getDeviceAttributes(deviceToken) async {
-    RestServerApi().getAttributesToDevice(context, deviceToken).then((value) {
+  getDeviceAttributes(Username) async {
+    RestServerApi().getAttributesToDevice(context, Username).then((value) {
       setState(() {
         isLoading = false;
       });

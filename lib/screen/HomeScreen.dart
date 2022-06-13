@@ -536,9 +536,10 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                                 //     CommonUtil.getJsonVal(result, 'deviceId');
                                 // if (deviceToken != "") {
                                 //putting "" in place of null
-                                // askManualOrAutoConnect(
-                                //     deviceToken, deviceId, deviceName);
-                                // } else {
+                                String Username = await CommonUtil
+                                    .getCurrentLoggedInUsername();
+                                askManualOrAutoConnect(Username);
+                                // else {
                                 // Delete
                                 // RestServerApi()
                                 //     .deleteDevice(context, deviceId);
@@ -562,8 +563,8 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     );
   }
 
-  askManualOrAutoConnect(String deviceToken, deviceId, deviceName) async {
-    SessionManager().saveRecentDeviceInfo(deviceId, deviceToken, deviceName);
+  askManualOrAutoConnect(Username) async {
+    SessionManager().saveRecentDeviceInfo(Username);
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
@@ -606,7 +607,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pop();
-                  connectToWifi(deviceToken, deviceId, deviceName);
+                  connectToWifi(Username);
                   //qr code
                   //QRCodeScreen();
                 },
@@ -619,7 +620,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                 onPressed: () {
                   Navigator.of(context).pop();
                   Navigators.pushAndRemoveUntil(
-                      context, WifiScanScreen(deviceToken: deviceToken));
+                      context, WifiScanScreen(Username: Username));
                 },
               ),
             ],
@@ -629,7 +630,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     );
   }
 
-  connectToWifi(String deviceToken, deviceId, deviceName) async {
+  connectToWifi(String Username) async {
     String ssid = "Smart Bell";
     String password = "password";
 
@@ -657,7 +658,10 @@ class _HomeScreenState extends BaseState<HomeScreen> {
           if (value) {
             hideLoader();
             Navigators.pushAndRemoveUntil(
-                context, WifiScanScreen(deviceToken: deviceToken));
+                context,
+                WifiScanScreen(
+                  Username: Username,
+                ));
           } else {
             hideLoader();
             Navigators.pushAndRemoveUntil(context, WifiConnectErrorScreen());
@@ -665,7 +669,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
         }).catchError((onError) {
           hideLoader();
           Navigators.pushAndRemoveUntil(
-              context, WifiScanScreen(deviceToken: deviceToken));
+              context, WifiScanScreen(Username: Username));
         });
       });
     } else {
