@@ -1,3 +1,4 @@
+import 'package:smart_bell/dao/User.dart';
 import 'package:smart_bell/dao/UserInfoData.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/ui/BaseState.dart';
@@ -13,8 +14,11 @@ import 'package:flutter/material.dart';
 
 class AccountScreen extends StatefulWidget {
   UserInfoData infoData;
-
-  AccountScreen({Key key, this.infoData}) : super(key: key);
+  User userInfo;
+  void Function(User) updateUserInfo;
+  Map<String, String> userData;
+  AccountScreen({Key key, this.userData, this.userInfo, this.updateUserInfo})
+      : super(key: key);
 
   @override
   _AccountScreenState createState() => _AccountScreenState();
@@ -22,6 +26,8 @@ class AccountScreen extends StatefulWidget {
 
 class _AccountScreenState extends BaseState<AccountScreen> {
   UserInfoData infoData;
+  User userInfo;
+  Map<String, String> userData;
   TextEditingController editingController = TextEditingController();
   TextEditingController fName = TextEditingController();
   TextEditingController lName = TextEditingController();
@@ -29,12 +35,13 @@ class _AccountScreenState extends BaseState<AccountScreen> {
 
   @override
   void initState() {
-    infoData = widget.infoData;
+    userData = widget.userData;
+    userInfo = widget.userInfo;
     //change null
-    if (infoData != null) {
-      fName.text = infoData.firstName;
-      lName.text = infoData.lastName;
-      emailController.text = infoData.email;
+    if (userInfo != null) {
+      fName.text = userInfo.firstName;
+      lName.text = userInfo.lastName;
+      emailController.text = userInfo.email;
     }
     setState(() {});
     super.initState();
@@ -130,8 +137,10 @@ class _AccountScreenState extends BaseState<AccountScreen> {
                           SizedBox(height: 40),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: AppElevatedButtons('Update',
-                                onPressed: savePersonalDetails),
+                            child: AppElevatedButtons('Update', onPressed: () {
+                              FocusScope.of(context).unfocus();
+                              savePersonalDetails();
+                            }),
                           ),
                           SizedBox(height: 20),
                         ],
@@ -152,27 +161,17 @@ class _AccountScreenState extends BaseState<AccountScreen> {
         lName.text.isNotEmpty &&
         emailController.text.isNotEmpty) {
       showLoaderDialog(context);
-      String customerId = await SessionManager().getCustomerId();
-      String userId = await SessionManager().getLoginUserId();
-      String tenantId = await SessionManager().getTenantId();
-      RestServerApi()
-          .saveUser(context, fName.text, lName.text, emailController.text,
-              userId, customerId, tenantId)
-          .then((value) {
-        if (value) {
+      RestServerApi.updateProfile(fName.text, lName.text).then((value) {
+        if (value['status'] == true) {
           hideLoader();
+          userInfo.firstName = fName.text;
+          userInfo.lastName = lName.text;
+          widget.updateUserInfo(userInfo);
           Navigator.of(context).pop();
-
-          showSnackBar('Details has been successfully updated.');
-
-          infoData.firstName = fName.text;
-
-          infoData.lastName = lName.text;
-
-          infoData.email = emailController.text;
+          showSnackBar(value['message']);
         } else {
           Navigator.of(context).pop();
-          showSnackBar('Unable to update details.', isError: true);
+          showSnackBar(value['message'], isError: true);
         }
       });
     }

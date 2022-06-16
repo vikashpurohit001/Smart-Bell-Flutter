@@ -14,6 +14,7 @@ import 'package:smart_bell/widgets/InputTextField.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_time_picker_spinner/flutter_time_picker_spinner.dart';
+import 'package:smart_bell/widgets/ProgressIndicator.dart';
 import 'package:smart_bell/widgets/my_number_picker.dart';
 import 'package:sizer/sizer.dart';
 
@@ -33,6 +34,8 @@ class _AddSessionTimeState extends BaseState<AddSessionTime> {
   final TextEditingController name = TextEditingController();
 
   bool isNameValidate = true;
+
+  bool isLoading = false;
 
   String deviceToken;
   Map<String, dynamic> map = {};
@@ -195,109 +198,113 @@ class _AddSessionTimeState extends BaseState<AddSessionTime> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         brightness: Brightness.light,
-        leading: backWidget,
+        leading: isLoading ? null : backWidget,
         title: Text(
           '${widget.data != null ? 'Edit' : 'Add'} Session Time',
           style: Theme.of(context).textTheme.headline1,
         ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              await isInternetAvailable(onResult: (isInternet) {
-                print("Internet Add Method Called:: $isInternet");
-                if (isInternet) {
-                  _saveSessionData();
-                }
-              });
-            },
-            child: Text(
-              'Save',
-              style: TextStyles.theme18Bold,
-            ),
-          )
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 2.h, right: 2.h),
-              child: InputTextField(
-                controller: name,
-                isValidate: isNameValidate,
-                label: 'Session Name',
-              ),
-            ),
-            Card(
-              color: Colors.white,
-              elevation: 0,
-              child: TimePickerTheme(
-                data: TimePickerThemeData(
-                    shape: Border.symmetric(
-                        horizontal:
-                            BorderSide(color: Color(0xff717171), width: 1)),
-                    inputDecorationTheme: InputDecorationTheme(
-                        border: UnderlineInputBorder(),
-                        fillColor: Colors.black)),
-                child: TimePickerSpinner(
-                  is24HourMode: false,
-                  time: sessionData.time,
-                  normalTextStyle: TextStyles().grey22Bold60Opacity,
-                  highlightedTextStyle: TextStyles.theme22Bold(context),
-                  spacing: 3.h,
-                  itemHeight: 7.h,
-                  itemWidth: 8.h,
-                  isForce2Digits: true,
-                  onTimeChange: (time) {
-                    setState(() {
-                      sessionData.time = time;
+        actions: isLoading
+            ? []
+            : [
+                TextButton(
+                  onPressed: () async {
+                    await isInternetAvailable(onResult: (isInternet) {
+                      print("Internet Add Method Called:: $isInternet");
+                      if (isInternet) {
+                        _saveSessionData();
+                      }
                     });
                   },
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 2.h,
-            ),
-            Container(
-              color: Colors.white,
-              child: Column(
-                children: [
-                  SessionListForwardTile(
-                      label: 'Repeat',
-                      value: repeatText,
-                      onTap: () async {
-                        FocusScope.of(context).unfocus();
-                        _showRepeatDialog(sessionData);
-                      }),
-                  LineDivider(),
-                  SessionListForwardTile(
-                      label: 'Bell Count',
-                      value: sessionData.bellCount == 1
-                          ? 'Once'
-                          : sessionData.bellCount.toString(),
-                      onTap: () async {
-                        FocusScope.of(context).unfocus();
-                        _showBellCountDialog(sessionData);
-                      }),
-                  LineDivider(),
-                  SessionListSwitchTile(
-                    label: 'Special Bell',
-                    value: sessionData.isSpecialBell == 1,
-                    onChanged: (val) {
-                      FocusScope.of(context).unfocus();
-                      sessionData.isSpecialBell = val ? 1 : 0;
-                      setState(() {});
-                    },
+                  child: Text(
+                    'Save',
+                    style: TextStyles.theme18Bold,
                   ),
+                )
+              ],
+      ),
+      body: isLoading
+          ? AppIndicator()
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 2.h, right: 2.h),
+                    child: InputTextField(
+                      controller: name,
+                      isValidate: isNameValidate,
+                      label: 'Session Name',
+                    ),
+                  ),
+                  Card(
+                    color: Colors.white,
+                    elevation: 0,
+                    child: TimePickerTheme(
+                      data: TimePickerThemeData(
+                          shape: Border.symmetric(
+                              horizontal: BorderSide(
+                                  color: Color(0xff717171), width: 1)),
+                          inputDecorationTheme: InputDecorationTheme(
+                              border: UnderlineInputBorder(),
+                              fillColor: Colors.black)),
+                      child: TimePickerSpinner(
+                        is24HourMode: false,
+                        time: sessionData.time,
+                        normalTextStyle: TextStyles().grey22Bold60Opacity,
+                        highlightedTextStyle: TextStyles.theme22Bold(context),
+                        spacing: 3.h,
+                        itemHeight: 7.h,
+                        itemWidth: 8.h,
+                        isForce2Digits: true,
+                        onTimeChange: (time) {
+                          setState(() {
+                            sessionData.time = time;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 2.h,
+                  ),
+                  Container(
+                    color: Colors.white,
+                    child: Column(
+                      children: [
+                        SessionListForwardTile(
+                            label: 'Repeat',
+                            value: repeatText,
+                            onTap: () async {
+                              FocusScope.of(context).unfocus();
+                              _showRepeatDialog(sessionData);
+                            }),
+                        LineDivider(),
+                        SessionListForwardTile(
+                            label: 'Bell Count',
+                            value: sessionData.bellCount == 1
+                                ? 'Once'
+                                : sessionData.bellCount.toString(),
+                            onTap: () async {
+                              FocusScope.of(context).unfocus();
+                              _showBellCountDialog(sessionData);
+                            }),
+                        LineDivider(),
+                        SessionListSwitchTile(
+                          label: 'Special Bell',
+                          value: sessionData.isSpecialBell == 1,
+                          onChanged: (val) {
+                            FocusScope.of(context).unfocus();
+                            sessionData.isSpecialBell = val ? 1 : 0;
+                            setState(() {});
+                          },
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
-            )
-          ],
-        ),
-      ),
+            ),
     );
   }
 
@@ -322,10 +329,10 @@ class _AddSessionTimeState extends BaseState<AddSessionTime> {
               });
           return;
         } else {
+          setState(() {});
           print("Session  List");
           Navigator.of(context).pop(sessionData);
-          connectWithMqtt(sessionData);
-          print(sessionData);
+          // connectWithMqtt(sessionData);
           //send data here
 
         }

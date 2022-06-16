@@ -27,6 +27,9 @@ import 'package:smart_bell/dao/DeviceBell.dart';
 const kDeviceURL =
     'https://t5aa275v2j.execute-api.eu-central-1.amazonaws.com/default/Smart_bell_lambda';
 
+const kDynamoDbUrl =
+    'https://z8otpdwr58.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb';
+
 class RestServerApi {
   NetworkUtil _netUtil = new NetworkUtil();
   var tenantClient = ThingsboardClient("https://dev-iot.habilelabs.io");
@@ -113,12 +116,10 @@ class RestServerApi {
       extractedName = extractedName.split('.json')[0];
       finalResult.add(DeviceBell(extractedName));
     }
-    print(finalResult);
     return finalResult;
   }
 
   static Future<dynamic> createDevice(String name) async {
-    print('Helloooo');
     String deviceName = await CommonUtil.generateDeviceName(name);
     print(deviceName);
     var result = await http.post(
@@ -141,6 +142,147 @@ class RestServerApi {
             ['PrivateKey'],
         deviceName);
     return {'status': true, 'message': 'Device Created Successfully'};
+  }
+
+  static Future<dynamic> getCredentials(String name) async {
+    String deviceName = await CommonUtil.generateDeviceName(name);
+    var result = await http.post(
+      Uri.parse(kDeviceURL),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{"Action": "get", "Device": deviceName}),
+    );
+    await CommonUtil.createCertificate(
+        jsonDecode(result.body)['files'][0][deviceName]['certificatePem'],
+        name);
+    await CommonUtil.createKey(
+        jsonDecode(result.body)['files'][0][deviceName]['keyPair']
+            ['PrivateKey'],
+        name);
+    return {'status': true, 'message': 'Certificate Created Successfully'};
+  }
+
+  static Future<dynamic> updateProfile(
+      String firstname, String lastname) async {
+    List<AuthUserAttribute> attributes = [
+      AuthUserAttribute(
+          userAttributeKey: CognitoUserAttributeKey.givenName,
+          value: firstname),
+      AuthUserAttribute(
+          userAttributeKey: CognitoUserAttributeKey.familyName,
+          value: lastname),
+    ];
+
+    try {
+      await Amplify.Auth.updateUserAttributes(attributes: attributes);
+      return {'message': 'Account updated successfully', 'status': true};
+    } on AmplifyException catch (e) {
+      return {'message': e.message, 'status': false};
+    }
+  }
+
+  static Future<dynamic> updatePassword(
+      String oldPassword, String newPassword) async {
+    try {
+      await Amplify.Auth.updatePassword(
+          oldPassword: oldPassword, newPassword: newPassword);
+      return {'message': 'Account updated successfully', 'status': true};
+    } on AmplifyException catch (e) {
+      return {'message': 'Please enter correct Password', 'status': false};
+    }
+  }
+
+  static Future<dynamic> getSessions(String name) async {
+    String username = await CommonUtil.getCurrentLoggedInUsername();
+    String deviceName = '${username}_${name}_App';
+    var result = await http.post(
+      Uri.parse(kDynamoDbUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        "TableName": "Smart_Bell_Device",
+        "Data": "",
+        "Find": deviceName
+      }),
+    );
+    if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
+      Map<String, dynamic> attributes = jsonDecode(result.body)['Data']['Data'];
+      DeviceAttributes deviceAttributes = DeviceAttributes();
+      deviceAttributes.attributes = attributes;
+      if (attributes == null) {
+        return deviceAttributes;
+      }
+      List<SessionData> sessionList = [];
+      List<String> weekdays = attributes.keys.toList();
+
+      for (String weekName in weekdays) {
+        if (weekName != "isPaused") {
+          Map<String, dynamic> weekMap =
+              CommonUtil.getJsonVal(attributes, weekName);
+          List<String> sessionNames = weekMap.keys.toList();
+          for (String sessionName in sessionNames) {
+            SessionData sessionData;
+            var data = sessionList
+                .where((element) => element.shift_name == sessionName);
+            if (data != null && data.length > 0) {
+              sessionData = data.elementAt(0);
+            }
+            if (sessionData == null) {
+              sessionData = SessionData();
+              sessionData.shift_name = sessionName;
+              Map<String, dynamic> shiftInfo = weekMap[sessionName];
+              sessionData.time = CommonUtil.getJsonVal(shiftInfo, "time")
+                  .toString()
+                  .convertTimeToDateTime();
+              sessionData.bellCount = int.parse(
+                  CommonUtil.getJsonVal(shiftInfo, "count").toString());
+              if (shiftInfo.containsKey("isSpecialBell")) {
+                sessionData.isSpecialBell = int.parse(
+                    CommonUtil.getJsonVal(shiftInfo, "isSpecialBell")
+                        .toString());
+              } else {
+                sessionData.isSpecialBell = 0;
+              }
+              sessionData.weekdays = [];
+              sessionList.add(sessionData);
+            }
+            sessionData.weekdays.add(weekName);
+          }
+        } else {
+          deviceAttributes.isPaused =
+              CommonUtil.getJsonVal(attributes, weekName);
+        }
+      }
+      sessionList.sort((a, b) =>
+          a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
+      deviceAttributes.sessionList = sessionList;
+      return deviceAttributes;
+    } else {
+      return [];
+    }
+  }
+
+  Future<dynamic> getMiscDetail(String name, String detail) async {
+    String username = await CommonUtil.getCurrentLoggedInUsername();
+    String deviceName = '${username}_${name}_Device_${detail}';
+    var result = await http.post(
+      Uri.parse(kDynamoDbUrl),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        "TableName": "Smart_Bell_Device",
+        "Data": "",
+        "Find": deviceName
+      }),
+    );
+    if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
+      return jsonDecode(result.body)['Data'][detail];
+    } else {
+      return null;
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////

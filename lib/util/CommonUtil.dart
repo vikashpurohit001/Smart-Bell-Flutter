@@ -198,7 +198,6 @@ class CommonUtil {
 
   static Future<void> createKey(String data, String deviceName) async {
     final directory = await getApplicationDocumentsDirectory();
-    print(directory.path);
     final file = File('${directory.path}/$deviceName.pem.key');
     await file.writeAsString('$data');
   }

@@ -319,7 +319,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         deviceName,
-                        editIcon,
+                        // editIcon,
                       ],
                     ),
                   ),

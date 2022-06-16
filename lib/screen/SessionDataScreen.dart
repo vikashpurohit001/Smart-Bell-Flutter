@@ -9,6 +9,7 @@ import 'package:smart_bell/dao/DeviceAttribute.dart';
 import 'package:smart_bell/dao/DeviceBell.dart';
 import 'package:smart_bell/dao/DeviceList.dart';
 import 'package:smart_bell/dao/SessionData.dart';
+import 'package:smart_bell/managers/MQTTManager.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/screen/NetworkInfo.dart';
 import 'package:smart_bell/screen/SessionTimeList.dart';
@@ -50,186 +51,68 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   GlobalKey<SessionTimeListState> sessionKey =
       new GlobalKey<SessionTimeListState>();
   SessionDataController _sessionDataController = SessionDataController();
-  MqttServerClient client;
+  MQTTManager MQTT;
 
   @override
   void initState() {
     Username = widget.Username;
-
-    // getDataFromServer();
-    _getDataFromServer();
+    MQTT = MQTTManager(
+        widget.deviceData.name, widget.deviceData.name, (payload) {});
+    getDataFromServer();
     super.initState();
+    MQTT.connect();
   }
-
-  // connection succeeded
-  // void onConnected() {
-  //   print('Connected');
-  //   client.subscribe("data_receive", MqttQos.atLeastOnce);
-  //   client.subscribe("data_receive" + "/response/+", MqttQos.atLeastOnce);
-  //   String payload =
-  //       '{"clientKeys":"last-check,last-sync", "sharedKeys":"isPaused"}';
-  //   final builder1 = MqttClientPayloadBuilder();
-  //   builder1.addString(payload);
-  //   client.publishMessage('esp32_test', MqttQos.atLeastOnce, builder1.payload);
-  // }
-
-// unconnected
-  // void onDisconnected() {
-  //   print(' On Disconnected');
-  // }
-
-// subscribe to topic succeeded
-  // void onSubscribed(String topic) {
-  //   client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-  //     final MqttPublishMessage message = c[0].payload;
-  //     final payload =
-  //         MqttPublishPayload.bytesToStringAsString(message.payload.message);
-  //     Map result = json.decode(payload);
-  //     print(result);
-
-  //     if (result.containsKey("shared") &&
-  //         result["shared"].containsKey('isPaused')) {
-  //       widget.deviceData.isPaused = result['shared']['isPaused'];
-  //       setState(() {});
-  //     }
-  //     if (result.containsKey("client") &&
-  //         result["client"].containsKey('last-check')) {
-  //       String lastCheck = result['client']['last-check'];
-  //       if (lastCheck != null) {
-  //         DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
-  //         Duration timeDifference = time.difference(DateTime.now());
-  //         if (timeDifference.inMinutes.abs() >= 1) {
-  //           widget.deviceData.isActive = false;
-  //         } else {
-  //           widget.deviceData.isActive = true;
-  //         }
-  //         setState(() {});
-  //       }
-  //     }
-  //     if (result.containsKey("client") &&
-  //         result["client"].containsKey('last-sync')) {
-  //       lastSyncTime = result['client']['last-sync'];
-  //       setState(() {});
-  //     }
-  //   });
-  // }
-
-// subscribe to topic failed
-  // void onSubscribeFail(String topic) {
-  //   print('Failed to subscribe $topic');
-  // }
-
-// unsubscribe succeeded
-  // void onUnsubscribed(String topic) {
-  //   print('Unsubscribed topic: $topic');
-  // }
 
 // PING response received
   void pong() {
     print('Ping response client callback invoked');
   }
 
-  // Future<MqttServerClient> connectWithMqtt() async {
-  //   client = MqttServerClient.withPort(
-  //       'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com', 'esp32', 8883);
-  //   client.logging(on: true);
-  //   client.autoReconnect = true;
-
-  //   client.onConnected = onConnected;
-  //   client.onDisconnected = onDisconnected;
-  //   client.onUnsubscribed = onUnsubscribed;
-  //   client.onSubscribed = onSubscribed;
-  //   client.onSubscribeFail = onSubscribeFail;
-  //   client.pongCallback = pong;
-
-  //   final connMessage = MqttConnectMessage().authenticateAs(deviceToken, '');
-  //   client.connectionMessage = connMessage;
-  //   try {
-  //     await client.connect();
-  //   } catch (e) {
-  //     print('Exception: $e');
-  //     client.disconnect();
-  //   }
-  //   return client;
-  // }
-
   @override
   void dispose() {
-    // if (client != null) {
-    //   client.unsubscribe("data_receive");
-    //   client.autoReconnect = false;
-    //   client.disconnect();
-    // }
+    MQTT.client.disconnect();
     super.dispose();
-  }
-
-  _getDataFromServer() async {
-    setState(() {
-      isLoading = true;
-    });
-    // Get Initial Data {API to be made}
-    setState(() {
-      isLoading = false;
-    });
   }
 
   getDataFromServer() {
     isLoading = true;
     isInternetIssue = false;
     setState(() {});
-    if (Username == null) {
-      // RestServerApi()
-      //     .getDeviceToken(context, widget.deviceData.deviceId)
-      //     .then((value) {
-      //   if (value is String) {
-      //     deviceToken = value;
-      //     getDeviceAttributes(value);
-      //   }
-      // }).catchError((onError) {
-      //   setState(() {
-      //     isInternetIssue = true;
-      //     isLoading = false;
-      //   });
-      //   showSnackBar(
-      //       "You might not connected to internet. Please check internet Connection.",
-      //       isError: true);
-      // });
-    } else {
-      // getDeviceAttributes(deviceToken);
-    }
+    getDeviceAttributes();
   }
 
-  getDeviceAttributes(Username) async {
-    RestServerApi().getAttributesToDevice(context, Username).then((value) {
-      setState(() {
-        isLoading = false;
-      });
-      if (value != null && value is DeviceAttributes) {
+  getDeviceAttributes() async {
+    RestServerApi.getSessions(widget.deviceData.name).then((value) {
+      if (value is DeviceAttributes) {
         deviceAttri = value;
         //isPaused = value.isPaused;
         sessionList = value.sessionList;
         sessionList.sort((a, b) =>
             a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
-
-        if (value.clientAttri != null) {
-          lastSyncTime = value.clientAttri['last-sync'];
-          //String lastCheck = value.clientAttri['last-check'];
-          wifiSSID = value.clientAttri['Wifi Name'];
-          // if (lastCheck != null) {
-          //   DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
-          //   Duration timeDifference = time.difference(DateTime.now());
-          //   print(timeDifference.inMinutes.abs());
-          //   if (timeDifference.inMinutes.abs() >= 1) {
-          //     isActive = false;
-          //   } else {
-          //     isActive = true;
-          //   }
-          // }
-        }
-        setState(() {});
       }
+
+      // if (value.clientAttri != null) {
+      // lastSyncTime = value.clientAttri['last-sync'];
+      //String lastCheck = value.clientAttri['last-check'];
+      // wifiSSID = value.clientAttri['Wifi Name'];
+      // if (lastCheck != null) {
+      //   DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+      //   Duration timeDifference = time.difference(DateTime.now());
+      //   print(timeDifference.inMinutes.abs());
+      //   if (timeDifference.inMinutes.abs() >= 1) {
+      //     isActive = false;
+      //   } else {
+      //     isActive = true;
+      //   }
+      // }
+      // }
+
+      setState(() {
+        isLoading = false;
+      });
+      // setState(() {});
     }).catchError((onError) {
-      print(onError);
+      print('This is Error: $onError');
       setState(() {
         isInternetIssue = true;
         isLoading = false;
@@ -247,11 +130,17 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
           dataList: this.sessionList,
         ));
     if (data != null) {
-      sessionList.add(data);
-      sessionList.sort((a, b) =>
+      List<SessionData> l = sessionList;
+      l.add(data);
+      l.sort((a, b) =>
           a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
-      setState(() {});
+      setState(() {
+        sessionList = l;
+      });
       saveDataToServer();
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -487,8 +376,8 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
 
           m1[sessionData.shift_name] = {
             "time": sessionData.time.getTimeOnly(),
-            "count": sessionData.bellCount,
-            "isSpecialBell": sessionData.isSpecialBell
+            "count": sessionData.bellCount.toInt(),
+            "isSpecialBell": sessionData.isSpecialBell.toInt()
           };
 
           sessionData.weekdays.add(onceDate);
@@ -541,31 +430,9 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void onSave(Map<String, dynamic> result) {
     isLoading = true;
     setState(() {});
-    // RestServerApi()
-    //     .addAttributesToDevice(context, widget.deviceData.deviceId, result)
-    //     .then((value) {
-    //   if (!(value is Map)) {
-    //     isLoading = false;
-    //     setState(() {});
-    //     deviceAttri.attributes = result;
-    //   }
-    //   CommonUtil.showOkDialog(
-    //       context: context,
-    //       message: "Session saved successfully",
-    //       onClick: () {
-    //         Navigator.of(context).pop();
-    //       });
-    // }).catchError((onError) {
-    //   isLoading = false;
-    //   sessionList.elementAt(sessionList.length - 1).isSynced = false;
-    //   setState(() {});
-    //   CommonUtil.showOkDialog(
-    //       context: context,
-    //       message: "Error saving session data. Please try again.",
-    //       onClick: () {
-    //         Navigator.of(context).pop();
-    //       });
-    // });
+    MQTT.publish(result);
+    isLoading = false;
+    setState(() {});
   }
 
   void onDelete(Map<String, dynamic> result, List<int> index) {

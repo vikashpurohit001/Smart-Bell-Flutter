@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
+import 'package:smart_bell/dao/DeviceBell.dart';
 import 'package:smart_bell/dao/DeviceList.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/screen/ChangeWifiTour.dart';
@@ -24,7 +25,7 @@ class DeviceListToChangeWifi extends StatefulWidget {
 }
 
 class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
-  List<DeviceList> _data = [];
+  List<DeviceBell> _data = [];
   bool isLoading = true;
   bool isNoInternet = false;
   String Username = null;
@@ -47,16 +48,18 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
       isLoading = true;
       isNoInternet = false;
     });
-    await isInternetAvailable(onResult: (isInternet) {
+    await isInternetAvailable(onResult: (isInternet) async {
       if (isInternet) {
-        RestServerApi().getDeviceList(context).then((value) {
+        String name = await CommonUtil.getCurrentLoggedInUsername();
+        RestServerApi.getBellDeviceList(name).then((value) {
           isLoading = false;
-
+          print(value);
           if (value != null && value is List) {
             _data = value;
           }
           setState(() {});
         }).catchError((error) {
+          print(error);
           isNoInternet = true;
           isLoading = false;
           setState(() {});
@@ -227,7 +230,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
     return null;
   }
 
-  Widget DeviceDataWidget(DeviceList _data) {
+  Widget DeviceDataWidget(DeviceBell _data) {
     Widget bellIcon = Image.asset(
       'assets/images/app_icon.png',
       color: Theme.of(context).primaryColor,
@@ -247,7 +250,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
         child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              _data.label != null ? _data.label : "",
+              _data.name != null ? _data.name : "",
               style: TextStyles().grey12Normal,
             )));
 
@@ -270,7 +273,7 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     deviceName,
-                    if (_data.label != null) wifiSSIDWidget,
+                    if (_data.name != null) wifiSSIDWidget,
                   ],
                 ),
               )

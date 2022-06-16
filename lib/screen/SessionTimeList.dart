@@ -36,8 +36,22 @@ class SessionTimeList extends StatefulWidget {
 }
 
 class SessionTimeListState extends State<SessionTimeList> {
+  @override
+  void didUpdateWidget(SessionTimeList oldWidget) {
+    setState(() {
+      _data = widget.sessionList;
+    });
+    super.didUpdateWidget(oldWidget);
+  }
+
   List<SessionData> _data = [];
   bool CanDelete = false;
+
+  void setNewList(List<SessionData> data) {
+    setState(() {
+      _data = data;
+    });
+  }
 
   @override
   void initState() {
@@ -129,7 +143,6 @@ class SessionTimeListState extends State<SessionTimeList> {
             child: ListView.builder(
               itemCount: _data.length,
               itemBuilder: (context, index) {
-
                 return InkWell(
                   child: SessionDataWidget(_data.elementAt(index), index),
                   onTap: () {},
@@ -289,7 +302,7 @@ class SessionTimeListState extends State<SessionTimeList> {
           _data = data;
           this._data.removeAt(index);
           this._data.insert(index, data);
-          this._data.sort((a,b)=>a.time.compareTo(b.time));
+          this._data.sort((a, b) => a.time.compareTo(b.time));
           setState(() {});
           saveDataToServer();
         }

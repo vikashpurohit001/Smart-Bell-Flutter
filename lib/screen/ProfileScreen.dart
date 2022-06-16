@@ -1,8 +1,7 @@
-import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
-import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:smart_bell/AppTourScreen.dart';
 import 'package:smart_bell/dao/UserInfoData.dart';
+import 'package:smart_bell/dao/User.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/screen/AccountScreen.dart';
 import 'package:smart_bell/screen/ChangePassword.dart';
@@ -27,7 +26,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends BaseState<ProfileScreen> {
   UserInfoData infoData;
-  String name = '', email = '';
+  User userInfo;
+  String name = '', email = '', lastname = '', firstname = '';
   String version = '1.0.0';
 
   @override
@@ -47,7 +47,12 @@ class _ProfileScreenState extends BaseState<ProfileScreen> {
 
   getInfoFromSession() async {
     Map<String, String> user = await CommonUtil.getCurrentUser();
+    User u = User(user['email'], user['given_name'], user['family_name'],
+        '${user['given_name']} ${user['family_name']}');
+    updateUserInfo(u);
     setState(() {
+      firstname = user['given_name'];
+      lastname = user['family_name'];
       name = '${user['given_name']} ${user['family_name']}';
       email = '${user['email']}';
     });
@@ -66,11 +71,18 @@ class _ProfileScreenState extends BaseState<ProfileScreen> {
     });
   }
 
+  updateUserInfo(User user) {
+    setState(() {
+      userInfo = user;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    String name = infoData != null
-        ? ("${infoData.firstName} ${infoData.lastName}")
+    String name = userInfo != null
+        ? ("${userInfo.firstName} ${userInfo.lastName}")
         : this.name;
+    String email = userInfo != null ? userInfo.email : this.email;
     return Container(
       child: Column(
         children: [
@@ -96,9 +108,8 @@ class _ProfileScreenState extends BaseState<ProfileScreen> {
                           ),
                         ),
                         SizedBox(height: 0.5.h),
-                        Text('$name', style: TextStyles.white16Normal),
-                        Text('${infoData != null ? infoData.email : email}',
-                            style: TextStyles.white16Normal),
+                        Text(name, style: TextStyles.white16Normal),
+                        Text(email, style: TextStyles.white16Normal),
                       ],
                     ),
                   ),
@@ -117,8 +128,13 @@ class _ProfileScreenState extends BaseState<ProfileScreen> {
                         Navigators.push(
                             context,
                             AccountScreen(
-                              infoData: infoData,
-                            ));
+                                userData: {
+                                  'firstname': firstname,
+                                  'lastname': lastname,
+                                  'email': email
+                                },
+                                userInfo: userInfo,
+                                updateUserInfo: updateUserInfo));
                       },
                     ),
                     LineDivider(),
