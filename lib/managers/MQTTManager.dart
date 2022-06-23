@@ -8,6 +8,7 @@ import 'package:mqtt_client/mqtt_client.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/util/CommonUtil.dart';
+import 'package:smart_bell/utilities/TextStyles.dart';
 
 class MQTTManager {
   String topic;
@@ -19,7 +20,8 @@ class MQTTManager {
   MqttServerClient client = MqttServerClient.withPort(
       'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com', 'abc', 8883);
 
-  Future<bool> connect() async {
+  Future<bool> connect(
+      BuildContext bcontext, bool subscribeToMiscDetails) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
     client.logging(on: true);
     client.autoReconnect = true;
@@ -43,37 +45,46 @@ class MQTTManager {
         .withClientIdentifier('esp32')
         .startClean()
         .withWillQos(MqttQos.exactlyOnce);
-    print('EXAMPLE::Mosquitto client connecting....');
     client.connectionMessage = connMess;
-
-    client.securityContext = context;
-    await client.connect();
-
     String topicName = '${username}_${deviceName}';
-
-    client.subscribe(topicName, MqttQos.atMostOnce);
-
-    client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
-      print('Listning on Topic $topicName');
-      final MqttPublishMessage message = c[0].payload;
-      final payload =
-          MqttPublishPayload.bytesToStringAsString(message.payload.message);
-      print(payload);
-      onMessage(payload);
-    });
+    client.securityContext = context;
+    try {
+      await client.connect();
+      if (subscribeToMiscDetails == true) {
+        client.subscribe(topicName, MqttQos.atMostOnce);
+      }
+    } catch (e) {
+      Navigator.of(bcontext).pop();
+      ScaffoldMessenger.of(bcontext).showSnackBar(new SnackBar(
+        content: new Text(
+          'Error: Could not connect to Server!',
+          style: TextStyles().scaffoldTextSize,
+        ),
+        backgroundColor: Colors.red,
+      ));
+    }
+    if (subscribeToMiscDetails == true) {
+      client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
+        final MqttPublishMessage message = c[0].payload;
+        final payload =
+            MqttPublishPayload.bytesToStringAsString(message.payload.message);
+        onMessage(payload);
+      });
+    }
 
     return true;
   }
 
   void publish(Map<String, dynamic> message) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
-    String topicName = '${username}_${deviceName}';
-    print(topicName);
+    String topicName = '${username}_${deviceName}_App';
+    // print(topicName);
     final builder = MqttClientPayloadBuilder();
     Map<String, dynamic> json = {
       'Device_Name': '${username}_${deviceName}_App',
       'Data': message
     };
+    // print(jsonEncode(json));
     builder.addString(jsonEncode(json));
     client.publishMessage(topicName, MqttQos.atLeastOnce, builder.payload);
   }

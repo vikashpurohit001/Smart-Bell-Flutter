@@ -7,10 +7,12 @@ import 'package:smart_bell/dao/DeviceList.dart';
 import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/dashboard/navigation.dart';
 
-SwipeAction swipeDelete({Function() onTap}) => SwipeAction(
+SwipeAction swipeDelete({onTap}) => SwipeAction(
     title: "Delete",
     style: TextStyles.white18Normal,
-    onTap: (CompletionHandler handler) => onTap,
+    onTap: (CompletionHandler handler) {
+      onTap();
+    },
     color: Colors.red);
 
 Widget BellIcon({bool isActive, bool isPaused}) => Image.asset(

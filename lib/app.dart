@@ -1,4 +1,3 @@
-import 'package:amplify_analytics_pinpoint/amplify_analytics_pinpoint.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:sizer/sizer.dart';
 import 'package:smart_bell/model/main_model.dart';

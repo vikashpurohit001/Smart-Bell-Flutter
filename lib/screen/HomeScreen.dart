@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info/device_info.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:mqtt_client/mqtt_server_client.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'package:showcaseview/showcaseview.dart';
@@ -55,6 +56,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
   GlobalKey listTileKey = GlobalKey();
   GlobalKey _editKey = GlobalKey();
   bool isAppLaunch = false;
+  List<DeviceBell> newDeviceList = <DeviceBell>[];
 
   @override
   void initState() {
@@ -73,6 +75,50 @@ class _HomeScreenState extends BaseState<HomeScreen> {
         LifecycleEventHandler(resumeCallBack: () async => getDeviceInfo()));
   }
 
+  updateNewDeviceList(List<DeviceBell> list) {
+    newDeviceList = list;
+    setState(() {});
+  }
+
+  getDeviceList() async {
+    model.setIsLoading(true);
+    model.setIsNoInternet(false);
+    String username = await CommonUtil.getCurrentLoggedInUsername();
+    await model.isInternetAvailable(context, onResult: (isInternet) {
+      if (isInternet) {
+        RestServerApi.getBellDeviceList(username).then((value) {
+          if (value != null && value is List) {
+            updateNewDeviceList(value);
+          }
+          model.setIsLoading(false);
+
+          for (int i = 0; i < newDeviceList.length; i++) {
+            RestServerApi.getMiscDetail(
+                    newDeviceList.elementAt(i).name, 'last_check')
+                .then((value) {
+              DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(value);
+              Duration timeDifference = time.difference(DateTime.now());
+              if (timeDifference.inMinutes.abs() >= 1) {
+                newDeviceList.elementAt(i).isActive = false;
+                setState(() {});
+              } else {
+                newDeviceList.elementAt(i).isActive = true;
+                setState(() {});
+              }
+            });
+          }
+        }).catchError((error) {
+          print("DeviceList Error $error");
+          model.setIsNoInternet(true);
+          model.setIsLoading(false);
+        });
+      } else {
+        model.setIsNoInternet(true);
+        model.setIsLoading(false);
+      }
+    });
+  }
+
   HomeModel model;
 
   void getDeviceInfo() async {
@@ -88,7 +134,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
   }
 
   getDeviceInformation() async {
-    model.getDeviceList(context);
+    getDeviceList();
   }
 
   @override
@@ -116,9 +162,9 @@ class _HomeScreenState extends BaseState<HomeScreen> {
       return AppStackView(
         isLoading: model.isLoading,
         child: [
-          model.isNoInternet && model.newDeviceList.isEmpty
+          model.isNoInternet && newDeviceList.isEmpty
               ? NoInternetScreen(onPressed: getDeviceInfo)
-              : !model.isLoading && model.newDeviceList.isEmpty
+              : !model.isLoading && newDeviceList.isEmpty
                   ? SetUpDeviceScreen()
                   : deviceListWidget(model)
         ],
@@ -127,8 +173,8 @@ class _HomeScreenState extends BaseState<HomeScreen> {
   }
 
   void redirectToSessionDataScreen(int index) {
-    Navigators.push(context,
-        SessionDataScreen(deviceData: model.newDeviceList.elementAt(index)));
+    Navigators.push(
+        context, SessionDataScreen(deviceData: newDeviceList.elementAt(index)));
   }
 
   Widget deviceListWidget(MainModel model) {
@@ -175,13 +221,13 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                 itemBuilder: (context, index) {
                   return InkWell(
                     child: DeviceDataWidget((isAppLaunch && index == 0),
-                        model.newDeviceList.elementAt(index)),
+                        newDeviceList.elementAt(index)),
                     onTap: () {
                       redirectToSessionDataScreen(index);
                     },
                   );
                 },
-                itemCount: model.newDeviceList.length,
+                itemCount: newDeviceList.length,
               )),
         ],
       ),
@@ -190,22 +236,21 @@ class _HomeScreenState extends BaseState<HomeScreen> {
 
   void deleteDevice(DeviceBell _data) async {
     showLoaderDialog(context);
-    // RestServerApi().deleteDevice(context, _data.deviceId).then((value) {
-    //   hideLoader();
-    //   if (!(value is Map)) {
-    //     this.model.deviceDataList.remove(_data);
-    //     setState(() {});
-    //     showSnackBar('Device deleted successfully.');
-    //   } else {
-    //     showSnackBar('Error deleting device. Please try again later.',
-    //         isError: true);
-    //   }
-    // }).catchError((onError) {
-    //   hideLoader();
-    //   showSnackBar(
-    //       'Error deleting device.${onError.toString()} Please try again. ',
-    //       isError: true);
-    // });
+    RestServerApi.deleteBellDevice(_data.name).then((value) {
+      hideLoader();
+      if (value['status'] == true) {
+        this.newDeviceList.remove(_data);
+        setState(() {});
+        showSnackBar(value['message']);
+      } else {
+        showSnackBar(value['message'], isError: true);
+      }
+    }).catchError((onError) {
+      hideLoader();
+      showSnackBar(
+          'Error deleting device.${onError.toString()} Please try again. ',
+          isError: true);
+    });
   }
 
   Future<dynamic> addDeviceToServer(context, deviceName) async {
@@ -523,7 +568,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                               dynamic value =
                                   await addDeviceToServer(mContext, deviceName);
                               if (value != "") {
-                                model.getDeviceList(context);
+                                getDeviceList();
                                 //putting "" in place of null
                                 // if (value is String) {
                                 // errorMessage = value;

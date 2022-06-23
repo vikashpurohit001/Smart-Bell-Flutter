@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info/device_info.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smart_bell/model/main_model.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
 import 'package:smart_bell/screen/HomeScreen.dart';
 import 'package:smart_bell/screen/WifiConnectErrorScreen.dart';

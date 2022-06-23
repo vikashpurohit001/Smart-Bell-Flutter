@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:async/async.dart';
+
 import 'package:flutter_time_picker_spinner/flutter_time_picker_spinner.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:smart_bell/dao/SessionData.dart';
 import 'package:smart_bell/screen/AddSessionTime.dart';
 import 'package:smart_bell/util/CommonUtil.dart';
@@ -19,6 +24,7 @@ class SessionTimeList extends StatefulWidget {
   final SessionDataController controller;
   Function(Map<String, dynamic>, List<SessionData>) onSave;
   Function(Map<String, dynamic>, List<int>) onDelete;
+  String lastCheck;
 
   SessionTimeList(
       {Key key,
@@ -28,7 +34,8 @@ class SessionTimeList extends StatefulWidget {
       this.onPause,
       this.isActive,
       this.isPaused,
-      this.onDelete})
+      this.onDelete,
+      this.lastCheck})
       : super(key: key);
 
   @override
@@ -36,11 +43,24 @@ class SessionTimeList extends StatefulWidget {
 }
 
 class SessionTimeListState extends State<SessionTimeList> {
+  String lastCheck;
+  bool isActive = false;
+  RestartableTimer periodicTimer;
+
   @override
   void didUpdateWidget(SessionTimeList oldWidget) {
     setState(() {
       _data = widget.sessionList;
+      lastCheck = widget.lastCheck;
     });
+    DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+    Duration timeDifference = time.difference(DateTime.now());
+    if (timeDifference.inMinutes.abs() >= 1) {
+      isActive = false;
+    } else {
+      isActive = true;
+      periodicTimer.reset();
+    }
     super.didUpdateWidget(oldWidget);
   }
 
@@ -53,10 +73,45 @@ class SessionTimeListState extends State<SessionTimeList> {
     });
   }
 
+  void timer() {
+    Timer.periodic(new Duration(seconds: 60), (timer) {
+      DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+      Duration timeDifference = time.difference(DateTime.now());
+      if (timeDifference.inMinutes.abs() >= 1) {
+        isActive = false;
+        setState(() {});
+      } else {
+        isActive = true;
+        setState(() {});
+      }
+    });
+  }
+
   @override
   void initState() {
+    lastCheck = widget.lastCheck;
     _data.addAll(widget.sessionList);
     super.initState();
+    if (lastCheck != null) {
+      DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+      Duration timeDifference = time.difference(DateTime.now());
+      if (timeDifference.inMinutes.abs() >= 1) {
+        isActive = false;
+      } else {
+        isActive = true;
+      }
+    }
+    periodicTimer = RestartableTimer(new Duration(seconds: 60), () {
+      DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+      Duration timeDifference = time.difference(DateTime.now());
+      if (timeDifference.inMinutes.abs() >= 1) {
+        isActive = false;
+        setState(() {});
+      } else {
+        isActive = true;
+        setState(() {});
+      }
+    });
   }
 
   setValueToController() {
@@ -109,7 +164,7 @@ class SessionTimeListState extends State<SessionTimeList> {
                 children: [
                   Icon(
                     Icons.circle,
-                    color: widget.isActive ? Colors.green : Colors.red,
+                    color: isActive ? Colors.green : Colors.red,
                     size: 20,
                   ),
                   SizedBox(
@@ -333,15 +388,16 @@ class SessionTimeListState extends State<SessionTimeList> {
                         context: context,
                         initialTime: TimeOfDay.fromDateTime(_data.time),
                       );
-
-                      _data.time = new DateTime(
-                          _data.time.year,
-                          _data.time.month,
-                          _data.time.day,
-                          newTime.hour,
-                          newTime.minute);
-                      // _data.tempDate.hour=newTime.hour;
-                      saveDataToServer();
+                      if (newTime != null) {
+                        _data.time = new DateTime(
+                            _data.time.year,
+                            _data.time.month,
+                            _data.time.day,
+                            newTime.hour,
+                            newTime.minute);
+                        // _data.tempDate.hour=newTime.hour;
+                        saveDataToServer();
+                      }
                     },
                   ),
                   Text(

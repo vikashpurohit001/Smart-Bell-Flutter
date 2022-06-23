@@ -121,7 +121,6 @@ class RestServerApi {
 
   static Future<dynamic> createDevice(String name) async {
     String deviceName = await CommonUtil.generateDeviceName(name);
-    print(deviceName);
     var result = await http.post(
       Uri.parse(kDeviceURL),
       headers: <String, String>{
@@ -264,9 +263,10 @@ class RestServerApi {
     }
   }
 
-  Future<dynamic> getMiscDetail(String name, String detail) async {
+  static Future<dynamic> getMiscDetail(String name, String detail) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
-    String deviceName = '${username}_${name}_Device_${detail}';
+    String deviceName = '${username}_${name}_Device-${detail}';
+    print('Device Name inside Misc Details: $deviceName');
     var result = await http.post(
       Uri.parse(kDynamoDbUrl),
       headers: <String, String>{
@@ -282,6 +282,29 @@ class RestServerApi {
       return jsonDecode(result.body)['Data'][detail];
     } else {
       return null;
+    }
+  }
+
+  static Future<dynamic> deleteBellDevice(String name) async {
+    String deviceName = await CommonUtil.generateDeviceName(name);
+    var result = await http.post(
+      Uri.parse(kDeviceURL),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        "Device_Type": "Smart_Bell",
+        "Action": "delete",
+        "Device": deviceName
+      }),
+    );
+    if (result.statusCode == 200) {
+      return {'status': true, 'message': 'Device deleted Successfully'};
+    } else {
+      return {
+        'status': false,
+        'message': 'Error: Please try again aftger some time'
+      };
     }
   }
 

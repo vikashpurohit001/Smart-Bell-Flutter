@@ -45,8 +45,11 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   bool isLoading = false;
   String Username;
   String lastSyncTime;
+  String lastCheck;
   bool isInternetIssue = false;
   String wifiSSID = null;
+  bool isActive;
+  bool isPaused = false;
   DeviceAttributes deviceAttri;
   GlobalKey<SessionTimeListState> sessionKey =
       new GlobalKey<SessionTimeListState>();
@@ -57,10 +60,25 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void initState() {
     Username = widget.Username;
     MQTT = MQTTManager(
-        widget.deviceData.name, widget.deviceData.name, (payload) {});
-    getDataFromServer();
+        widget.deviceData.name, widget.deviceData.name, processMQTTPayload);
     super.initState();
-    MQTT.connect();
+    getDataFromServer();
+    MQTT.connect(context, true);
+  }
+
+  void processMQTTPayload(payload) {
+    payload = jsonDecode(payload);
+    Map<String, dynamic> data = Map.from(payload);
+    if (data.containsKey('last_check')) {
+      lastCheck = data['last_check'];
+      setState(() {});
+    } else if (data.containsKey('last_sync')) {
+      lastSyncTime = data['last_sync'];
+      setState(() {});
+    } else {
+      wifiSSID = data['wifi_name'];
+      setState(() {});
+    }
   }
 
 // PING response received
@@ -83,33 +101,18 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
 
   getDeviceAttributes() async {
     RestServerApi.getSessions(widget.deviceData.name).then((value) {
+      setState(() {
+        isLoading = false;
+      });
+
       if (value is DeviceAttributes) {
         deviceAttri = value;
-        //isPaused = value.isPaused;
+        isPaused = value.isPaused;
         sessionList = value.sessionList;
         sessionList.sort((a, b) =>
             a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
       }
 
-      // if (value.clientAttri != null) {
-      // lastSyncTime = value.clientAttri['last-sync'];
-      //String lastCheck = value.clientAttri['last-check'];
-      // wifiSSID = value.clientAttri['Wifi Name'];
-      // if (lastCheck != null) {
-      //   DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
-      //   Duration timeDifference = time.difference(DateTime.now());
-      //   print(timeDifference.inMinutes.abs());
-      //   if (timeDifference.inMinutes.abs() >= 1) {
-      //     isActive = false;
-      //   } else {
-      //     isActive = true;
-      //   }
-      // }
-      // }
-
-      setState(() {
-        isLoading = false;
-      });
       // setState(() {});
     }).catchError((onError) {
       print('This is Error: $onError');
@@ -121,6 +124,13 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
           "You might not connected to internet. Please check internet Connection.",
           isError: true);
     });
+    lastSyncTime =
+        await RestServerApi.getMiscDetail(widget.deviceData.name, 'last_sync');
+    lastCheck =
+        await RestServerApi.getMiscDetail(widget.deviceData.name, 'last_check');
+    wifiSSID =
+        await RestServerApi.getMiscDetail(widget.deviceData.name, 'wifi_name');
+    setState(() {});
   }
 
   void addSession() async {
@@ -218,27 +228,28 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
                   child: Column(
                     children: [
                       if (wifiSSID != null)
-                        InkWell(
-                          onTap: () async {
-                            // Navigators.push(context, NetworkInfo(wifiInfo:wifiSSID));
-                          },
-                          child: RichText(
-                            text: TextSpan(
-                              children: [
-                                WidgetSpan(
-                                  child: Icon(
-                                    Icons.wifi_sharp,
-                                    size: 16,
-                                    color: Colors.black,
-                                  ),
+                        // InkWell(
+                        //   onTap: () async {
+                        //     // Navigators.push(context, NetworkInfo(wifiInfo:wifiSSID));
+                        //   },
+                        // child:
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              WidgetSpan(
+                                child: Icon(
+                                  Icons.wifi_sharp,
+                                  size: 16,
+                                  color: Colors.black,
                                 ),
-                                TextSpan(
-                                    text: "  ${wifiSSID}",
-                                    style: TextStyles.black14Normal),
-                              ],
-                            ),
+                              ),
+                              TextSpan(
+                                  text: "  ${wifiSSID}",
+                                  style: TextStyles.black14Normal),
+                            ],
                           ),
                         ),
+                      // ),
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: 2.h),
                         child: Row(
@@ -251,7 +262,14 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
                                         EdgeInsets.all(0)),
                                     minimumSize:
                                         MaterialStateProperty.all(Size(0, 0))),
-                                onPressed: () {},
+                                onPressed: () {
+                                  RestServerApi.getMiscDetail(
+                                          widget.deviceData.name, 'last_sync')
+                                      .then((response) {
+                                    lastSyncTime = response;
+                                    setState(() {});
+                                  });
+                                },
                                 label: Text(
                                   timeForm,
                                   style: TextStyles.theme14Normal,
@@ -272,15 +290,11 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
                                       Theme.of(context).primaryColor)),
                               onPressed: onPause,
                               label: Text(
-                                widget.deviceData.isPaused
-                                    ? "Resume Bell"
-                                    : "Pause Bell",
+                                isPaused ? "Resume Bell" : "Pause Bell",
                                 style: TextStyles.white14Normal,
                               ),
                               icon: Icon(
-                                widget.deviceData.isPaused
-                                    ? Icons.play_arrow
-                                    : Icons.pause,
+                                isPaused ? Icons.play_arrow : Icons.pause,
                                 color: Colors.white,
                                 size: 3.h,
                               ),
@@ -301,8 +315,9 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
                                     key: sessionKey,
                                     controller: _sessionDataController,
                                     sessionList: sessionList,
-                                    isPaused: widget.deviceData.isPaused,
+                                    isPaused: isPaused,
                                     isActive: widget.deviceData.isActive,
+                                    lastCheck: lastCheck,
                                     onPause: onPause,
                                     onDelete: (result, index) {
                                       onDelete(result, index);
@@ -325,13 +340,14 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   }
 
   void onPause() {
-    widget.deviceData.isPaused = !widget.deviceData.isPaused;
+    isPaused = !isPaused;
     Map<String, dynamic> serverData =
         deviceAttri != null && deviceAttri.attributes != null
             ? deviceAttri.attributes
-            : {"isPaused": widget.deviceData.isPaused};
-    serverData["isPaused"] = widget.deviceData.isPaused;
-    isLoading = true;
+            : {"isPaused": isPaused};
+    serverData["isPaused"] = isPaused;
+    MQTT.publish(serverData);
+    // isLoading = true;
     setState(() {});
     // RestServerApi()
     //     .addAttributesToDevice(context, widget.deviceData.deviceId, serverData)
@@ -430,6 +446,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void onSave(Map<String, dynamic> result) {
     isLoading = true;
     setState(() {});
+    print('On Save $result');
     MQTT.publish(result);
     isLoading = false;
     setState(() {});
@@ -438,32 +455,19 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void onDelete(Map<String, dynamic> result, List<int> index) {
     isLoading = true;
     setState(() {});
-    // RestServerApi()
-    //     .addAttributesToDevice(context, widget.deviceData.deviceId, result)
-    //     .then((value) {
-    //   isLoading = false;
-    //   for (int i = 0; i < index.length; i++) {
-    //     sessionList.removeAt(index.elementAt(i) - i);
-    //   }
+    isLoading = false;
+    for (int i = 0; i < index.length; i++) {
+      sessionList.removeAt(index.elementAt(i) - i);
+    }
 
-    //   deviceAttri.attributes = result;
-    //   setState(() {});
-    //   CommonUtil.showOkDialog(
-    //       context: context,
-    //       message: "Session deleted successfully",
-    //       onClick: () {
-    //         Navigator.of(context).pop();
-    //       });
-    // }).catchError((onError) {
-    //   isLoading = false;
-    //   setState(() {});
-    //   CommonUtil.showOkDialog(
-    //       context: context,
-    //       message: "Error deleting session data. Please try again.",
-    //       onClick: () {
-    //         Navigator.of(context).pop();
-    //       });
-    // });
+    deviceAttri.attributes = result;
+    setState(() {});
+    CommonUtil.showOkDialog(
+        context: context,
+        message: "Session deleted successfully",
+        onClick: () {
+          Navigator.of(context).pop();
+        });
   }
 
   void onAdd(SessionData sessionData) {

@@ -74,7 +74,7 @@ class NetworkUtil {
     headers['Accept'] = 'application/json';
 
     headers["X-Authorization"] = headerToken;
-    headers[HttpHeaders.cacheControlHeader]='max-age=3600, must-revalidate';
+    headers[HttpHeaders.cacheControlHeader] = 'max-age=3600, must-revalidate';
     return ioClient
         .get(uri, headers: headers)
         .then((http.Response response) async {
@@ -138,7 +138,6 @@ class NetworkUtil {
       isTenant = false;
       headerToken = await _getBasicAuthorizationString(context);
     }
-    print(headerToken);
     if (scheme == null) {
       scheme = HTTPS;
     }
@@ -149,14 +148,11 @@ class NetworkUtil {
         query: query,
         queryParameters: queryParam,
         path: methodName);
-    print(uri);
     return ioClient.post(uri, body: json.encode(body), headers: {
       "Content-Type": "application/json",
       'X-Authorization': headerToken,
-      HttpHeaders.cacheControlHeader:'max-age=3600, must-revalidate'
+      HttpHeaders.cacheControlHeader: 'max-age=3600, must-revalidate'
     }).then((http.Response response) async {
-      print(response);
-      print(response.body);
       final String res = response.body;
       final int statusCode = response.statusCode;
       if (statusCode == 200 && res.isEmpty) {
@@ -213,12 +209,12 @@ class NetworkUtil {
           ((X509Certificate cert, String host, int port) => trustSelfSigned);
     IOClient ioClient = new IOClient(httpClient);
     String headerToken;
-    bool isTenant=true;
+    bool isTenant = true;
     if (token != null) {
-      isTenant=true;
+      isTenant = true;
       headerToken = 'Bearer ' + token;
     } else if (await RestServerApi().getUserToken(context) != null) {
-      isTenant=false;
+      isTenant = false;
       headerToken = await _getBasicAuthorizationString(context);
     }
     Uri uri = new Uri(
@@ -231,7 +227,7 @@ class NetworkUtil {
     return ioClient.delete(uri, body: json.encode(body), headers: {
       "Content-Type": "application/json",
       'X-Authorization': headerToken,
-      HttpHeaders.cacheControlHeader:'max-age=3600, must-revalidate'
+      HttpHeaders.cacheControlHeader: 'max-age=3600, must-revalidate'
     }).then((http.Response response) async {
       final String res = response.body;
       final int statusCode = response.statusCode;
@@ -240,7 +236,7 @@ class NetworkUtil {
       }
       bool isLogin = await SessionManager().getLoginUserId() != null;
       if (statusCode == 401 && isLogin) {
-        if(isTenant && !callOnce){
+        if (isTenant && !callOnce) {
           await getTenantTokenAgain();
           return delete(context, methodName,
               body: body,
@@ -250,7 +246,7 @@ class NetworkUtil {
               query: query,
               queryParam: queryParam,
               callOnce: true);
-        }else {
+        } else {
           handleSessionTimeout(context);
           return tokenExpired;
         }
@@ -288,8 +284,7 @@ class NetworkUtil {
   }
 
   manageLogout(BuildContext context) {
-    CommonUtil.showSnackBar(context,
-        "Session Expired. Please re-login.");
+    CommonUtil.showSnackBar(context, "Session Expired. Please re-login.");
     Navigators.pushAndRemoveUntil(context, LoginPage());
   }
 }

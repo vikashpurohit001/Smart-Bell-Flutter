@@ -1,0 +1,58 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-bellsmart-dev-131641-authRole",
+      "UnauthRoleArn": "arn:aws:iam::941275879372:role/amplify-bellsmart-dev-131641-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::941275879372:role/amplify-bellsmart-dev-131641-authRole",
+      "Region": "eu-central-1",
+      "DeploymentBucketName": "amplify-bellsmart-dev-131641-deployment",
+      "UnauthRoleName": "amplify-bellsmart-dev-131641-unauthRole",
+      "StackName": "amplify-bellsmart-dev-131641",
+      "StackId": "arn:aws:cloudformation:eu-central-1:941275879372:stack/amplify-bellsmart-dev-131641/a227ba10-ee11-11ec-a637-0a1bce6d2850",
+      "AmplifyAppId": "d396n1kit131i9"
+    }
+  },
+  "auth": {
+    "bellsmart541a75e0": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false,
+      "frontendAuthConfig": {
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-bellsmart-dev-131641-deployment/amplify-cfn-templates/auth/bellsmart541a75e0-cloudformation-template.json",
+        "logicalId": "authbellsmart541a75e0"
+      },
+      "lastPushTimeStamp": "2022-06-17T08:05:52.810Z",
+      "output": {
+        "UserPoolId": "eu-central-1_Dv5MesuSs",
+        "AppClientIDWeb": "6pvb7p8825626ejc8up93n8c3",
+        "AppClientID": "388bj0air497vcflf6m12desol",
+        "IdentityPoolId": "eu-central-1:bfac5526-447e-49d7-87ae-6fcac0132b4e",
+        "UserPoolArn": "arn:aws:cognito-idp:eu-central-1:941275879372:userpool/eu-central-1_Dv5MesuSs",
+        "IdentityPoolName": "bellsmart541a75e0_identitypool_541a75e0__dev",
+        "UserPoolName": "bellsmart541a75e0_userpool_541a75e0"
+      },
+      "lastPushDirHash": "mwp4fAkg4yhUWtKY1Tho6qGC2oc="
+    }
+  }
+}
