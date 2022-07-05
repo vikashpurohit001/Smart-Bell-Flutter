@@ -72,37 +72,38 @@ extension FormValidation on TextEditingController {
 
 extension DateTimeFormat on DateTime {
   String getAmPmTime() {
-    return DateFormat('h:mm a').format(this);
+    return DateFormat('hh:mm a').format(this);
   }
 
   String getDateTime() {
-    return DateFormat('MMM d, yyyy h:mm a').format(this);
+    return DateFormat('MM dd, yyyy h:mm a').format(this);
   }
+
   String getTimeOnly() {
-    return DateFormat('H:m').format(this);
+    return DateFormat('HH:mm').format(this);
   }
 
   String getDateOnly() {
-    return DateFormat('MMM d, yyyy').format(this);
+    return DateFormat('MM dd, yyyy').format(this);
   }
 
   String getOnceDate() {
     String time = DateFormat(DateFormat.HOUR24_MINUTE_SECOND).format(this);
     DateTime currentDateTime = DateTime.now();
-    String date = DateFormat('d-MM-yyyy').format(currentDateTime);
+    String date = DateFormat('dd-MM-yyyy').format(currentDateTime);
     String dateTime = "$date $time";
-    DateTime todayDateTime = DateFormat('d-MM-yyyy HH:mm:ss').parse(dateTime);
+    DateTime todayDateTime = DateFormat('dd-MM-yyyy HH:mm:ss').parse(dateTime);
     if (todayDateTime.isAfter(currentDateTime)) {
       return date;
     } else {
       currentDateTime = currentDateTime.add(Duration(days: 1));
-      String date = DateFormat('d-MM-yyyy').format(currentDateTime);
+      String date = DateFormat('dd-MM-yyyy').format(currentDateTime);
       return date;
     }
   }
 
-  getTimeInDateTime(){
-    String date= this.getTimeOnly();
+  getTimeInDateTime() {
+    String date = this.getTimeOnly();
     return date.convertTimeToDateTime();
   }
 }

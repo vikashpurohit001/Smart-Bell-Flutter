@@ -53,13 +53,15 @@ class SessionTimeListState extends State<SessionTimeList> {
       _data = widget.sessionList;
       lastCheck = widget.lastCheck;
     });
-    DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
-    Duration timeDifference = time.difference(DateTime.now());
-    if (timeDifference.inMinutes.abs() >= 1) {
-      isActive = false;
-    } else {
-      isActive = true;
-      periodicTimer.reset();
+    if (lastCheck != null) {
+      DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(lastCheck);
+      Duration timeDifference = time.difference(DateTime.now());
+      if (timeDifference.inMinutes.abs() >= 1) {
+        isActive = false;
+      } else {
+        isActive = true;
+        periodicTimer.reset();
+      }
     }
     super.didUpdateWidget(oldWidget);
   }

@@ -19,8 +19,9 @@ import 'package:carousel_slider/carousel_slider.dart';
 
 class WifiScanScreen extends StatefulWidget {
   String Username;
+  String deviceName;
 
-  WifiScanScreen({Key key, this.Username}) : super(key: key);
+  WifiScanScreen({Key key, this.Username, this.deviceName}) : super(key: key);
 
   @override
   _WifiScanScreenState createState() => _WifiScanScreenState();
@@ -158,7 +159,9 @@ class _WifiScanScreenState extends BaseState<WifiScanScreen> {
                                               context,
                                               AuthWifiScreen(
                                                   wifiNetwork: wifiData,
-                                                  Username: widget.Username));
+                                                  Username: widget.Username,
+                                                  deviceName:
+                                                      widget.deviceName));
                                         },
                                         child: Padding(
                                           padding: EdgeInsets.symmetric(

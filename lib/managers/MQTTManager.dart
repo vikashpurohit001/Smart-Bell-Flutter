@@ -46,7 +46,7 @@ class MQTTManager {
         .startClean()
         .withWillQos(MqttQos.exactlyOnce);
     client.connectionMessage = connMess;
-    String topicName = '${username}_${deviceName}';
+    String topicName = '${username}_${deviceName}_Device';
     client.securityContext = context;
     try {
       await client.connect();
@@ -54,14 +54,17 @@ class MQTTManager {
         client.subscribe(topicName, MqttQos.atMostOnce);
       }
     } catch (e) {
-      Navigator.of(bcontext).pop();
-      ScaffoldMessenger.of(bcontext).showSnackBar(new SnackBar(
-        content: new Text(
-          'Error: Could not connect to Server!',
-          style: TextStyles().scaffoldTextSize,
-        ),
-        backgroundColor: Colors.red,
-      ));
+      // print('this is catch ${e}');
+      if (bcontext.runtimeType == 'StatefulElement') {
+        Navigator.of(bcontext).pop();
+        ScaffoldMessenger.of(bcontext).showSnackBar(new SnackBar(
+          content: new Text(
+            'Error: Could not connect to Server!',
+            style: TextStyles().scaffoldTextSize,
+          ),
+          backgroundColor: Colors.red,
+        ));
+      }
     }
     if (subscribeToMiscDetails == true) {
       client.updates.listen((List<MqttReceivedMessage<MqttMessage>> c) {
@@ -75,7 +78,7 @@ class MQTTManager {
     return true;
   }
 
-  void publish(Map<String, dynamic> message) async {
+  Future<bool> publish(Map<String, dynamic> message) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
     String topicName = '${username}_${deviceName}_App';
     // print(topicName);
@@ -86,7 +89,12 @@ class MQTTManager {
     };
     // print(jsonEncode(json));
     builder.addString(jsonEncode(json));
-    client.publishMessage(topicName, MqttQos.atLeastOnce, builder.payload);
+    try {
+      client.publishMessage(topicName, MqttQos.atLeastOnce, builder.payload);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<Map<String, String>> checkOrGenerate(name) async {

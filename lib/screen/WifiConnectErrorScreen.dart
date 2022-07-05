@@ -57,9 +57,9 @@ class _WifiConnectErrorScreenState extends BaseState<WifiConnectErrorScreen> {
       if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         print('Running on ${androidInfo.model}');
-        if (androidInfo.model.toUpperCase().contains("ONEPLUS")) {
-          canAutoConnect = false;
-        }
+        // if (androidInfo.model.toUpperCase().contains("ONEPLUS")) {
+        //   canAutoConnect = false;
+        // }
       }
       if (canAutoConnect) {
         showLoaderDialog(context);

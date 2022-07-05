@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info/device_info.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:smart_bell/dao/DeviceBell.dart';
 import 'package:smart_bell/model/main_model.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
+import 'package:smart_bell/screen/DashboardScreen.dart';
 import 'package:smart_bell/screen/HomeScreen.dart';
 import 'package:smart_bell/screen/WifiConnectErrorScreen.dart';
 import 'package:smart_bell/screen/WifiScanScreen.dart';
@@ -95,12 +97,20 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                   Navigator.pop(context);
                   if (deviceTitleController.text.isNotEmpty) {
                     showLoaderDialog(context);
-                    RestServerApi.createDevice(deviceTitleController.text)
-                        .then((response) {
+                    RestServerApi.createDevice(
+                            deviceTitleController.text.replaceAll(' ', '_'))
+                        .then((response) async {
                       hideLoader();
                       if (response['status'] == true) {
                         showSnackBar(response['message']);
-                        Navigator.pop(context);
+                        // Navigator.pushReplacement(
+                        //     mContext,
+                        //     MaterialPageRoute(
+                        //         builder: (context) => DashboardScreen()));
+                        String Username =
+                            await CommonUtil.getCurrentLoggedInUsername();
+                        askManualOrAutoConnect(Username,
+                            deviceTitleController.text.replaceAll(' ', '_'));
                       }
                     });
                   } else {}
@@ -113,9 +123,9 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
     );
   }
 
-  askManualOrAutoConnect(String Username) async {
+  askManualOrAutoConnect(String Username, String devicename) async {
     SessionManager().saveRecentDeviceInfo(Username);
-    showDialog<bool>(
+    bool dialog = await showDialog<bool>(
       context: context,
       builder: (context) {
         return Theme(
@@ -152,7 +162,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                   style: TextStyles.dialogNeutralButton(),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
                   connectToWifi(Username);
                 },
               ),
@@ -162,7 +172,7 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
                   style: TextStyles.dialogPositiveButton(context),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
                   Navigators.pushAndRemoveUntil(
                       context, WifiScanScreen(Username: Username));
                 },
@@ -172,6 +182,10 @@ class _SetUpDeviceScreenState extends BaseState<SetUpDeviceScreen> {
         );
       },
     );
+
+    if (dialog == null) {
+      RestServerApi.deleteBellDevice(devicename);
+    }
   }
 
   connectToWifi(String Username) async {

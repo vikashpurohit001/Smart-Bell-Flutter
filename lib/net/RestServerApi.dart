@@ -30,6 +30,8 @@ const kDeviceURL =
 const kDynamoDbUrl =
     'https://z8otpdwr58.execute-api.eu-central-1.amazonaws.com/default/Storing_data_dynamodb';
 
+const kHardwareUrl = '192.168.4.1';
+
 class RestServerApi {
   NetworkUtil _netUtil = new NetworkUtil();
   var tenantClient = ThingsboardClient("https://dev-iot.habilelabs.io");
@@ -100,57 +102,73 @@ class RestServerApi {
   }
 
   static Future<dynamic> getBellDeviceList(String username) async {
-    var result = await http.post(
-      Uri.parse(kDeviceURL),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(
-          <String, String>{"Action": "get_list", "Device": '${username}'}),
-    );
-    Map<String, dynamic> decodedResponse = jsonDecode(result.body);
-    List<DeviceBell> finalResult = [];
-    for (String name in decodedResponse['files']) {
-      String username = await CommonUtil.getCurrentLoggedInUsername();
-      String extractedName = name.split('${username}_')[1];
-      extractedName = extractedName.split('.json')[0];
-      finalResult.add(DeviceBell(extractedName));
+    try {
+      var result = await http.post(
+        Uri.parse(kDeviceURL),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          "Action": "get_list",
+          "Device": '${username}',
+          'Device_Type': 'Smart_Bell'
+        }),
+      );
+      Map<String, dynamic> decodedResponse = jsonDecode(result.body);
+      List<DeviceBell> finalResult = [];
+      for (String name in decodedResponse['files']) {
+        String username = await CommonUtil.getCurrentLoggedInUsername();
+        String extractedName = name.split('${username}_')[1];
+        extractedName = extractedName.split('.json')[0];
+        finalResult.add(DeviceBell(extractedName));
+      }
+      return finalResult;
+    } catch (e) {
+      return false;
     }
-    return finalResult;
   }
 
   static Future<dynamic> createDevice(String name) async {
+    try {
+      String deviceName = await CommonUtil.generateDeviceName(name);
+      var result = await http.post(
+        Uri.parse(kDeviceURL),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          "Device_Type": "Smart_Bell",
+          "Action": "create",
+          "Device": deviceName
+        }),
+      );
+      await CommonUtil.createCertificate(
+          jsonDecode(result.body)['files'][0][deviceName]['certificatePem'],
+          deviceName);
+      print(jsonDecode(result.body)['files'][0][deviceName]['certificatePem']);
+      await CommonUtil.createKey(
+          jsonDecode(result.body)['files'][0][deviceName]['keyPair']
+              ['PrivateKey'],
+          deviceName);
+      return {'status': true, 'message': 'Device Created Successfully'};
+    } catch (e) {
+      return {'status': false, 'message': 'Please Try again after sometime'};
+    }
+  }
+
+  static Future<dynamic> getCredentials(String name) async {
     String deviceName = await CommonUtil.generateDeviceName(name);
+    print('This is device name: $deviceName');
     var result = await http.post(
       Uri.parse(kDeviceURL),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        "Device_Type": "Smart_Bell",
-        "Action": "create",
-        "Device": deviceName
+        "Action": "get",
+        "Device": deviceName,
+        "Device_Type": "Smart_Bell"
       }),
-    );
-    await CommonUtil.createCertificate(
-        jsonDecode(result.body)['files'][0][deviceName]['certificatePem'],
-        deviceName);
-    print(jsonDecode(result.body)['files'][0][deviceName]['certificatePem']);
-    await CommonUtil.createKey(
-        jsonDecode(result.body)['files'][0][deviceName]['keyPair']
-            ['PrivateKey'],
-        deviceName);
-    return {'status': true, 'message': 'Device Created Successfully'};
-  }
-
-  static Future<dynamic> getCredentials(String name) async {
-    String deviceName = await CommonUtil.generateDeviceName(name);
-    var result = await http.post(
-      Uri.parse(kDeviceURL),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{"Action": "get", "Device": deviceName}),
     );
     await CommonUtil.createCertificate(
         jsonDecode(result.body)['files'][0][deviceName]['certificatePem'],
@@ -193,117 +211,134 @@ class RestServerApi {
   }
 
   static Future<dynamic> getSessions(String name) async {
-    String username = await CommonUtil.getCurrentLoggedInUsername();
-    String deviceName = '${username}_${name}_App';
-    var result = await http.post(
-      Uri.parse(kDynamoDbUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        "TableName": "Smart_Bell_Device",
-        "Data": "",
-        "Find": deviceName
-      }),
-    );
-    if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
-      Map<String, dynamic> attributes = jsonDecode(result.body)['Data']['Data'];
-      DeviceAttributes deviceAttributes = DeviceAttributes();
-      deviceAttributes.attributes = attributes;
-      if (attributes == null) {
-        return deviceAttributes;
-      }
-      List<SessionData> sessionList = [];
-      List<String> weekdays = attributes.keys.toList();
-
-      for (String weekName in weekdays) {
-        if (weekName != "isPaused") {
-          Map<String, dynamic> weekMap =
-              CommonUtil.getJsonVal(attributes, weekName);
-          List<String> sessionNames = weekMap.keys.toList();
-          for (String sessionName in sessionNames) {
-            SessionData sessionData;
-            var data = sessionList
-                .where((element) => element.shift_name == sessionName);
-            if (data != null && data.length > 0) {
-              sessionData = data.elementAt(0);
-            }
-            if (sessionData == null) {
-              sessionData = SessionData();
-              sessionData.shift_name = sessionName;
-              Map<String, dynamic> shiftInfo = weekMap[sessionName];
-              sessionData.time = CommonUtil.getJsonVal(shiftInfo, "time")
-                  .toString()
-                  .convertTimeToDateTime();
-              sessionData.bellCount = int.parse(
-                  CommonUtil.getJsonVal(shiftInfo, "count").toString());
-              if (shiftInfo.containsKey("isSpecialBell")) {
-                sessionData.isSpecialBell = int.parse(
-                    CommonUtil.getJsonVal(shiftInfo, "isSpecialBell")
-                        .toString());
-              } else {
-                sessionData.isSpecialBell = 0;
-              }
-              sessionData.weekdays = [];
-              sessionList.add(sessionData);
-            }
-            sessionData.weekdays.add(weekName);
-          }
-        } else {
-          deviceAttributes.isPaused =
-              CommonUtil.getJsonVal(attributes, weekName);
+    try {
+      String username = await CommonUtil.getCurrentLoggedInUsername();
+      String deviceName = '${username}_${name}_App';
+      var result = await http.post(
+        Uri.parse(kDynamoDbUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          "TableName": "Smart_Bell_Device",
+          "Data": "",
+          "Find": deviceName
+        }),
+      );
+      if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
+        Map<String, dynamic> attributes =
+            jsonDecode(result.body)['Data']['Data'];
+        DeviceAttributes deviceAttributes = DeviceAttributes();
+        deviceAttributes.attributes = attributes;
+        if (attributes == null) {
+          return deviceAttributes;
         }
+        List<SessionData> sessionList = [];
+        List<String> weekdays = attributes.keys.toList();
+
+        for (String weekName in weekdays) {
+          if (weekName != "isPaused") {
+            Map<String, dynamic> weekMap =
+                CommonUtil.getJsonVal(attributes, weekName);
+            List<String> sessionNames = weekMap.keys.toList();
+            for (String sessionName in sessionNames) {
+              SessionData sessionData;
+              var data = sessionList
+                  .where((element) => element.shift_name == sessionName);
+              if (data != null && data.length > 0) {
+                sessionData = data.elementAt(0);
+              }
+              if (sessionData == null) {
+                sessionData = SessionData();
+                sessionData.shift_name = sessionName;
+                Map<String, dynamic> shiftInfo = weekMap[sessionName];
+                sessionData.time = CommonUtil.getJsonVal(shiftInfo, "time")
+                    .toString()
+                    .convertTimeToDateTime();
+                sessionData.bellCount = int.parse(
+                    CommonUtil.getJsonVal(shiftInfo, "count").toString());
+                if (shiftInfo.containsKey("isSpecialBell")) {
+                  sessionData.isSpecialBell = int.parse(
+                      CommonUtil.getJsonVal(shiftInfo, "isSpecialBell")
+                          .toString());
+                } else {
+                  sessionData.isSpecialBell = 0;
+                }
+                sessionData.weekdays = [];
+                sessionList.add(sessionData);
+              }
+              sessionData.weekdays.add(weekName);
+            }
+          } else {
+            deviceAttributes.isPaused =
+                CommonUtil.getJsonVal(attributes, weekName);
+          }
+        }
+        sessionList.sort((a, b) =>
+            a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
+        deviceAttributes.sessionList = sessionList;
+        return deviceAttributes;
+      } else {
+        return [];
       }
-      sessionList.sort((a, b) =>
-          a.time.getTimeInDateTime().compareTo(b.time.getTimeInDateTime()));
-      deviceAttributes.sessionList = sessionList;
-      return deviceAttributes;
-    } else {
+    } catch (e) {
       return [];
     }
   }
 
   static Future<dynamic> getMiscDetail(String name, String detail) async {
-    String username = await CommonUtil.getCurrentLoggedInUsername();
-    String deviceName = '${username}_${name}_Device-${detail}';
-    print('Device Name inside Misc Details: $deviceName');
-    var result = await http.post(
-      Uri.parse(kDynamoDbUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        "TableName": "Smart_Bell_Device",
-        "Data": "",
-        "Find": deviceName
-      }),
-    );
-    if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
-      return jsonDecode(result.body)['Data'][detail];
-    } else {
+    try {
+      String username = await CommonUtil.getCurrentLoggedInUsername();
+      String deviceName = '${username}_${name}_Device-${detail}';
+      var result = await http.post(
+        Uri.parse(kDynamoDbUrl),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          "TableName": "Smart_Bell_Device",
+          "Data": "",
+          "Find": deviceName
+        }),
+      );
+      print(
+          'This is Misclaneous Detail: ${jsonDecode(result.body)}  : $detail');
+      if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
+        return jsonDecode(result.body)['Data'][detail];
+      } else {
+        return null;
+      }
+    } catch (e) {
       return null;
     }
   }
 
   static Future<dynamic> deleteBellDevice(String name) async {
-    String deviceName = await CommonUtil.generateDeviceName(name);
-    var result = await http.post(
-      Uri.parse(kDeviceURL),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(<String, String>{
-        "Device_Type": "Smart_Bell",
-        "Action": "delete",
-        "Device": deviceName
-      }),
-    );
-    if (result.statusCode == 200) {
-      return {'status': true, 'message': 'Device deleted Successfully'};
-    } else {
+    try {
+      String deviceName = await CommonUtil.generateDeviceName(name);
+      var result = await http.post(
+        Uri.parse(kDeviceURL),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          "Device_Type": "Smart_Bell",
+          "Action": "delete",
+          "Device": deviceName
+        }),
+      );
+      if (result.statusCode == 200) {
+        return {'status': true, 'message': 'Device deleted Successfully'};
+      } else {
+        return {
+          'status': false,
+          'message': 'Error: Please try again after some time'
+        };
+      }
+    } catch (e) {
       return {
         'status': false,
-        'message': 'Error: Please try again aftger some time'
+        'message': 'Error: Please try again after some time'
       };
     }
   }
@@ -530,14 +565,18 @@ class RestServerApi {
   Future<List<String>> getWifiList(
     BuildContext context,
   ) async {
-    Map<String, dynamic> res = await _netUtil.get(context, "/",
-        port: 80, host: NetworkUtil.BASE_LOCAL_URL, scheme: NetworkUtil.HTTP);
+    try {
+      Map<String, dynamic> res = await _netUtil.get(context, "/",
+          port: 80, host: NetworkUtil.BASE_LOCAL_URL, scheme: NetworkUtil.HTTP);
 
-    if (res != null) {
-      List<String> keys = res.keys.toList();
-      return keys;
+      if (res != null) {
+        List<String> keys = res.keys.toList();
+        return keys;
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 
   Future<dynamic> postToken(BuildContext context, Username) async {
@@ -552,23 +591,27 @@ class RestServerApi {
   }
 
   Future<IotWifiConfigData> configureDevice(
-      BuildContext context, String ssid, password, Username) async {
-    await postToken(context, Username);
-    var param = {
-      "ssid": ssid,
-      "password": password,
-    };
-    IotWifiConfigData data;
-    Map<String, dynamic> res = await _netUtil.post(context, '/configure',
-        body: param,
-        host: NetworkUtil.BASE_LOCAL_URL,
-        port: 80,
-        scheme: NetworkUtil.HTTP);
+      BuildContext context, String ssid, password, Username, deviceName) async {
+    try {
+      await postToken(context, '${Username}_${deviceName}');
+      var param = {
+        "ssid": ssid,
+        "password": password,
+      };
+      IotWifiConfigData data;
+      Map<String, dynamic> res = await _netUtil.post(context, '/configure',
+          body: param,
+          host: NetworkUtil.BASE_LOCAL_URL,
+          port: 80,
+          scheme: NetworkUtil.HTTP);
 
-    if (res != null) {
-      data = IotWifiConfigData.fromJson(res);
+      if (res != null) {
+        data = IotWifiConfigData.fromJson(res);
+      }
+      return data;
+    } catch (e) {
+      return configureDevice(context, ssid, password, Username, deviceName);
     }
-    return data;
   }
 
   Future<dynamic> addDeviceToServer(BuildContext context, String title,

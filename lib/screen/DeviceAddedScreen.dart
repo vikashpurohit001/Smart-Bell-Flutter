@@ -1,5 +1,6 @@
 import 'package:smart_bell/dao/DeviceBell.dart';
 import 'package:smart_bell/dao/DeviceList.dart';
+import 'package:smart_bell/screen/DashboardScreen.dart';
 import 'package:smart_bell/utilities/Navigators.dart';
 import 'package:smart_bell/utilities/TextStyles.dart';
 import 'package:smart_bell/widgets/AppElevatedButton.dart';
@@ -58,13 +59,13 @@ class DeviceAddedScreen extends StatelessWidget {
                   AppElevatedButtons(
                     isNewConnection ? 'Add Session' : 'View Sessions',
                     onPressed: () {
-                      DeviceBell device = DeviceBell('');
+                      // DeviceBell device = DeviceBell('');
                       Navigators.push(
                           context,
-                          SessionDataScreen(
-                            Username: Username,
-                            deviceData: device,
-                          ));
+                          DashboardScreen(
+                              // Username: Username,
+                              // deviceData: device,
+                              ));
                     },
                   ),
                   SizedBox(

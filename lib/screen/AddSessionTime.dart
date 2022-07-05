@@ -330,7 +330,6 @@ class _AddSessionTimeState extends BaseState<AddSessionTime> {
           return;
         } else {
           setState(() {});
-          print("Session  List");
           Navigator.of(context).pop(sessionData);
           // connectWithMqtt(sessionData);
           //send data here

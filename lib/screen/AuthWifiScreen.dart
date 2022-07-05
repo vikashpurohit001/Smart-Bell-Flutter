@@ -17,9 +17,9 @@ import 'package:wifi_configuration_2/wifi_configuration_2.dart' as WifiConfig;
 import 'package:wifi_iot/wifi_iot.dart';
 
 class AuthWifiScreen extends StatefulWidget {
-  String wifiNetwork, Username;
+  String wifiNetwork, Username, deviceName;
 
-  AuthWifiScreen({Key key, this.wifiNetwork, this.Username});
+  AuthWifiScreen({Key key, this.wifiNetwork, this.Username, this.deviceName});
 
   @override
   _AuthWifiScreenState createState() => _AuthWifiScreenState();
@@ -172,8 +172,8 @@ class _AuthWifiScreenState extends BaseState<AuthWifiScreen> {
       isLoading = true;
     });
     RestServerApi()
-        .configureDevice(
-            context, _wifiController.text, pass.text, widget.Username)
+        .configureDevice(context, _wifiController.text, pass.text,
+            widget.Username, widget.deviceName)
         .then((value) async {
       setState(() {
         isLoading = false;

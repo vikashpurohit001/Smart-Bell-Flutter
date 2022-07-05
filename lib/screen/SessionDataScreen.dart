@@ -67,6 +67,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   }
 
   void processMQTTPayload(payload) {
+    print('This is a Long Payload $payload');
     payload = jsonDecode(payload);
     Map<String, dynamic> data = Map.from(payload);
     if (data.containsKey('last_check')) {
@@ -323,13 +324,17 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
                                       onDelete(result, index);
                                     },
                                     onSave: (result, sessionListResult) {
-                                      sessionList.clear();
-                                      sessionList.addAll(sessionListResult);
-                                      sessionList.sort((a, b) => a.time
+                                      // sessionList.clear();
+                                      List<SessionData> newList = [];
+                                      newList.addAll(sessionListResult);
+                                      newList.sort((a, b) => a.time
                                           .getTimeInDateTime()
                                           .compareTo(
                                               b.time.getTimeInDateTime()));
-                                      setState(() {});
+                                      setState(() {
+                                        sessionList = newList;
+                                      });
+
                                       onSave(result);
                                     }),
                       )
@@ -346,9 +351,13 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
             ? deviceAttri.attributes
             : {"isPaused": isPaused};
     serverData["isPaused"] = isPaused;
-    MQTT.publish(serverData);
+    MQTT.publish(serverData).then((value) {
+      setState(() {});
+      if (value == false) {
+        showSnackBar("Error: try again after sometime", isError: true);
+      }
+    });
     // isLoading = true;
-    setState(() {});
     // RestServerApi()
     //     .addAttributesToDevice(context, widget.deviceData.deviceId, serverData)
     //     .then((value) {
@@ -447,9 +456,13 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
     isLoading = true;
     setState(() {});
     print('On Save $result');
-    MQTT.publish(result);
-    isLoading = false;
-    setState(() {});
+    MQTT.publish(result).then((value) {
+      isLoading = false;
+      setState(() {});
+      if (value == false) {
+        showSnackBar("Error: try again after sometime", isError: true);
+      }
+    });
   }
 
   void onDelete(Map<String, dynamic> result, List<int> index) {

@@ -65,14 +65,16 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     }
 
     getDeviceInfo();
-    widget.onTargetAdded([addDevice, listTileKey]);
+    if (widget.onTargetAdded != null) {
+      widget.onTargetAdded([addDevice, listTileKey]);
+    }
     eventHandlers();
     super.initState();
   }
 
   void eventHandlers() {
-    WidgetsBinding.instance.addObserver(
-        LifecycleEventHandler(resumeCallBack: () async => getDeviceInfo()));
+    // WidgetsBinding.instance.addObserver(
+    //     LifecycleEventHandler(resumeCallBack: () async => getDeviceInfo()));
   }
 
   updateNewDeviceList(List<DeviceBell> list) {
@@ -87,25 +89,31 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     await model.isInternetAvailable(context, onResult: (isInternet) {
       if (isInternet) {
         RestServerApi.getBellDeviceList(username).then((value) {
-          if (value != null && value is List) {
+          if (value == false) {
+            model.setIsNoInternet(true);
+            model.setIsLoading(false);
+          } else {
             updateNewDeviceList(value);
-          }
-          model.setIsLoading(false);
 
-          for (int i = 0; i < newDeviceList.length; i++) {
-            RestServerApi.getMiscDetail(
-                    newDeviceList.elementAt(i).name, 'last_check')
-                .then((value) {
-              DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(value);
-              Duration timeDifference = time.difference(DateTime.now());
-              if (timeDifference.inMinutes.abs() >= 1) {
-                newDeviceList.elementAt(i).isActive = false;
-                setState(() {});
-              } else {
-                newDeviceList.elementAt(i).isActive = true;
-                setState(() {});
-              }
-            });
+            model.setIsLoading(false);
+
+            for (int i = 0; i < newDeviceList.length; i++) {
+              RestServerApi.getMiscDetail(
+                      newDeviceList.elementAt(i).name, 'last_check')
+                  .then((value) {
+                if (value != null) {
+                  DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(value);
+                  Duration timeDifference = time.difference(DateTime.now());
+                  if (timeDifference.inMinutes.abs() >= 1) {
+                    newDeviceList.elementAt(i).isActive = false;
+                    setState(() {});
+                  } else {
+                    newDeviceList.elementAt(i).isActive = true;
+                    setState(() {});
+                  }
+                }
+              });
+            }
           }
         }).catchError((error) {
           print("DeviceList Error $error");
@@ -557,7 +565,16 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                   ),
                   onPressed: () async {
                     errorMessage = null;
-                    String deviceName = deviceTitleController.text;
+                    String deviceName =
+                        deviceTitleController.text.replaceAll(' ', '_');
+                    for (var i in newDeviceList) {
+                      if (i.name == deviceName) {
+                        showSnackBar(
+                            'Device with Specified name already Exists',
+                            isError: true);
+                        return;
+                      }
+                    }
                     if (deviceName.isNotEmpty) {
                       await isInternetAvailable(
                           showPopUp: true,
@@ -569,28 +586,11 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                                   await addDeviceToServer(mContext, deviceName);
                               if (value != "") {
                                 getDeviceList();
-                                //putting "" in place of null
-                                // if (value is String) {
-                                // errorMessage = value;
-                                // setBState(() {});
-                                // } else if (value is Map) {
-                                // Navigator.pop(context);
-                                // Map<String, dynamic> result = value;
-                                // String deviceToken = CommonUtil.getJsonVal(
-                                //     result, 'deviceToken');
-                                // String deviceId =
-                                //     CommonUtil.getJsonVal(result, 'deviceId');
-                                // if (deviceToken != "") {
-                                //putting "" in place of null
+                                // Navigator.pop(ctx);
+                                Navigator.pop(context);
                                 String Username = await CommonUtil
                                     .getCurrentLoggedInUsername();
-                                askManualOrAutoConnect(Username);
-                                // else {
-                                // Delete
-                                // RestServerApi()
-                                //     .deleteDevice(context, deviceId);
-                                // }
-                                // }
+                                askManualOrAutoConnect(Username, deviceName);
                               }
                             } else {
                               setBState(() {
@@ -609,13 +609,13 @@ class _HomeScreenState extends BaseState<HomeScreen> {
     );
   }
 
-  askManualOrAutoConnect(Username) async {
+  askManualOrAutoConnect(Username, String devicename) async {
     SessionManager().saveRecentDeviceInfo(Username);
     DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
     }
-    showDialog<bool>(
+    bool dialog = await showDialog(
       context: context,
       builder: (context) {
         return Theme(
@@ -652,8 +652,8 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                   style: TextStyles.dialogPositiveButton(context),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
-                  connectToWifi(Username);
+                  Navigator.of(context).pop(true);
+                  connectToWifi(Username, devicename);
                   //qr code
                   //QRCodeScreen();
                 },
@@ -664,9 +664,13 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                   style: TextStyles.dialogNeutralButton(),
                 ),
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Navigator.of(context).pop(true);
                   Navigators.pushAndRemoveUntil(
-                      context, WifiScanScreen(Username: Username));
+                      context,
+                      WifiScanScreen(
+                        Username: Username,
+                        deviceName: devicename,
+                      ));
                 },
               ),
             ],
@@ -674,9 +678,21 @@ class _HomeScreenState extends BaseState<HomeScreen> {
         );
       },
     );
+    if (dialog == null) {
+      RestServerApi.deleteBellDevice(devicename).then((value) {
+        if (value['status'] == true) {
+          for (DeviceBell i in this.newDeviceList) {
+            if (i.name == devicename) {
+              this.newDeviceList.remove(i);
+              setState(() {});
+            }
+          }
+        } else {}
+      });
+    }
   }
 
-  connectToWifi(String Username) async {
+  connectToWifi(String Username, String devicename) async {
     String ssid = "Smart Bell";
     String password = "password";
 
@@ -707,6 +723,7 @@ class _HomeScreenState extends BaseState<HomeScreen> {
                 context,
                 WifiScanScreen(
                   Username: Username,
+                  deviceName: devicename,
                 ));
           } else {
             hideLoader();

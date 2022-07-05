@@ -28,7 +28,7 @@ class HomeModel extends Model {
   List<DeviceBell> _newDeviceList = [];
   List<MqttServerClient> _clientList = [];
 
-  bool get isLoading => _isLoading;
+  bool get isLoading => _isLoading || false;
 
   bool get isNoInternet => _isNoInternet;
 
@@ -78,13 +78,14 @@ class HomeModel extends Model {
             RestServerApi.getMiscDetail(
                     _deviceDataList.elementAt(i).name, 'last_check')
                 .then((value) {
-              print(value);
-              DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(value);
-              Duration timeDifference = time.difference(DateTime.now());
-              if (timeDifference.inMinutes.abs() >= 1) {
-                _deviceDataList.elementAt(i).isActive = false;
-              } else {
-                _deviceDataList.elementAt(i).isActive = true;
+              if (value != null) {
+                DateTime time = DateFormat('dd-MM-yyyy,HH:mm').parse(value);
+                Duration timeDifference = time.difference(DateTime.now());
+                if (timeDifference.inMinutes.abs() >= 1) {
+                  _deviceDataList.elementAt(i).isActive = false;
+                } else {
+                  _deviceDataList.elementAt(i).isActive = true;
+                }
               }
             });
           }

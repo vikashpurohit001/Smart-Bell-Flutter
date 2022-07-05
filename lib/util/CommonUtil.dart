@@ -149,7 +149,10 @@ class CommonUtil {
                     "Ok",
                     style: TextStyles.dialogPositiveButton(context),
                   ),
-                  onPressed: onClick,
+                  onPressed: () {
+                    // Navigator.of(context).pop();
+                    onClick();
+                  },
                 ),
                 CupertinoDialogAction(
                   child: Text(
