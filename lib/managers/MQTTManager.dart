@@ -20,7 +20,7 @@ class MQTTManager {
   MqttServerClient client = MqttServerClient.withPort(
       'a3n2130neve4if-ats.iot.eu-central-1.amazonaws.com', 'abc', 8883);
 
-  Future<bool> connect(
+  Future<MqttServerClient> connect(
       BuildContext bcontext, bool subscribeToMiscDetails) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
     client.logging(on: true);
@@ -74,8 +74,7 @@ class MQTTManager {
         onMessage(payload);
       });
     }
-
-    return true;
+    return client;
   }
 
   Future<bool> publish(Map<String, dynamic> message) async {

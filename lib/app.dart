@@ -47,7 +47,7 @@ class _MyApplicationState extends State<MyApplication> {
         });
       }
     } catch (e) {
-      print('Could not fetch Session $e');
+      // print('Could not fetch Session $e');
     }
   }
 
@@ -63,7 +63,7 @@ class _MyApplicationState extends State<MyApplication> {
         print(
             "Amplify was already configured. Looks like app restarted on android.");
       } catch (e) {
-        print("Oh No" + e);
+        // print("Oh No" + e);
       }
     }
   }

@@ -301,8 +301,7 @@ class RestServerApi {
           "Find": deviceName
         }),
       );
-      print(
-          'This is Misclaneous Detail: ${jsonDecode(result.body)}  : $detail');
+
       if (jsonDecode(result.body)['Data'] is! List<dynamic>) {
         return jsonDecode(result.body)['Data'][detail];
       } else {

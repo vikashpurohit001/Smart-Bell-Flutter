@@ -55,6 +55,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
       new GlobalKey<SessionTimeListState>();
   SessionDataController _sessionDataController = SessionDataController();
   MQTTManager MQTT;
+  MqttServerClient client;
 
   @override
   void initState() {
@@ -63,11 +64,14 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
         widget.deviceData.name, widget.deviceData.name, processMQTTPayload);
     super.initState();
     getDataFromServer();
-    MQTT.connect(context, true);
+    getMQTTClientInstance();
+  }
+
+  getMQTTClientInstance() async {
+    client = await MQTT.connect(context, true);
   }
 
   void processMQTTPayload(payload) {
-    print('This is a Long Payload $payload');
     payload = jsonDecode(payload);
     Map<String, dynamic> data = Map.from(payload);
     if (data.containsKey('last_check')) {
@@ -351,12 +355,16 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
             ? deviceAttri.attributes
             : {"isPaused": isPaused};
     serverData["isPaused"] = isPaused;
-    MQTT.publish(serverData).then((value) {
-      setState(() {});
-      if (value == false) {
-        showSnackBar("Error: try again after sometime", isError: true);
-      }
-    });
+    if (client.connectionStatus.state.name == 'connected') {
+      MQTT.publish(serverData).then((value) {
+        setState(() {});
+        if (value == false) {
+          showSnackBar("Error: try again after sometime", isError: true);
+        }
+      });
+    } else {
+      showSnackBar("Error: Could not connect to Server", isError: true);
+    }
     // isLoading = true;
     // RestServerApi()
     //     .addAttributesToDevice(context, widget.deviceData.deviceId, serverData)
@@ -398,7 +406,6 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
           if (map.containsKey(onceDate)) {
             m1 = map[onceDate];
           }
-
           m1[sessionData.shift_name] = {
             "time": sessionData.time.getTimeOnly(),
             "count": sessionData.bellCount.toInt(),
@@ -455,32 +462,49 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   void onSave(Map<String, dynamic> result) {
     isLoading = true;
     setState(() {});
-    print('On Save $result');
-    MQTT.publish(result).then((value) {
+    if (client.connectionStatus.state.name == 'connected') {
+      MQTT.publish(result).then((value) {
+        isLoading = false;
+        setState(() {});
+        if (value == false) {
+          showSnackBar("Error: try again after sometime", isError: true);
+        }
+      });
+    } else {
       isLoading = false;
       setState(() {});
-      if (value == false) {
-        showSnackBar("Error: try again after sometime", isError: true);
-      }
-    });
+      showSnackBar("Error: Could Connect to server", isError: true);
+    }
   }
 
   void onDelete(Map<String, dynamic> result, List<int> index) {
-    isLoading = true;
-    setState(() {});
-    isLoading = false;
     for (int i = 0; i < index.length; i++) {
-      sessionList.removeAt(index.elementAt(i) - i);
+      // sessionList.removeAt(index.elementAt(i) - i);
     }
 
     deviceAttri.attributes = result;
     setState(() {});
-    CommonUtil.showOkDialog(
-        context: context,
-        message: "Session deleted successfully",
-        onClick: () {
-          Navigator.of(context).pop();
-        });
+
+    if (client.connectionStatus.state.name == 'connected') {
+      MQTT.publish(result).then((value) {
+        isLoading = false;
+        setState(() {});
+        if (value == false) {
+          showSnackBar("Error: try again after sometime", isError: true);
+        } else {
+          CommonUtil.showOkDialog(
+              context: context,
+              message: "Session deleted successfully",
+              onClick: () {
+                Navigator.of(context).pop();
+              });
+        }
+      });
+    } else {
+      isLoading = false;
+      setState(() {});
+      showSnackBar("Error: Could Connect to server", isError: true);
+    }
   }
 
   void onAdd(SessionData sessionData) {
