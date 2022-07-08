@@ -23,7 +23,7 @@ class MQTTManager {
   Future<MqttServerClient> connect(
       BuildContext bcontext, bool subscribeToMiscDetails) async {
     String username = await CommonUtil.getCurrentLoggedInUsername();
-    client.logging(on: true);
+    // client.logging(on: true);
     client.autoReconnect = true;
     client.secure = true;
     client.keepAlivePeriod = 1800000;

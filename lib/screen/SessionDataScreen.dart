@@ -350,21 +350,75 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
 
   void onPause() {
     isPaused = !isPaused;
-    Map<String, dynamic> serverData =
-        deviceAttri != null && deviceAttri.attributes != null
-            ? deviceAttri.attributes
-            : {"isPaused": isPaused};
-    serverData["isPaused"] = isPaused;
-    if (client.connectionStatus.state.name == 'connected') {
-      MQTT.publish(serverData).then((value) {
-        setState(() {});
-        if (value == false) {
-          showSnackBar("Error: try again after sometime", isError: true);
+    Map<String, dynamic> map = {};
+    for (SessionData sessionData in sessionList) {
+      if (sessionData != null) {
+        if (sessionData.weekdays.isEmpty) {
+          Map<String, dynamic> m1 = {};
+          String onceDate = sessionData.time.getOnceDate();
+          if (map.containsKey(onceDate)) {
+            m1 = map[onceDate];
+          }
+          m1[sessionData.shift_name] = {
+            "time": sessionData.time.getTimeOnly(),
+            "count": sessionData.bellCount.toInt(),
+            "isSpecialBell": sessionData.isSpecialBell.toInt()
+          };
+
+          sessionData.weekdays.add(onceDate);
+          map[onceDate] = m1;
+        } else {
+          List<String> weekDayList = [];
+          weekDayList.addAll(sessionData.weekdays);
+          for (String data in sessionData.weekdays) {
+            if (checkWeekDayIsDate(data) && sessionData.weekdays.length > 1) {
+              map[data] = {};
+              weekDayList.remove(data);
+            } else {
+              Map<String, dynamic> m1 =
+                  map.containsKey(data) ? map[data] : null;
+              if (m1 != null) {
+                m1[sessionData.shift_name] = {
+                  "time": sessionData.time.getTimeOnly(),
+                  "count": sessionData.bellCount,
+                  "isSpecialBell": sessionData.isSpecialBell
+                };
+                map[data] = m1;
+              } else {
+                map[data] = {
+                  sessionData.shift_name: {
+                    "time": sessionData.time.getTimeOnly(),
+                    "count": sessionData.bellCount,
+                    "isSpecialBell": sessionData.isSpecialBell
+                  }
+                };
+              }
+            }
+          }
+          sessionData.weekdays = weekDayList;
         }
-      });
-    } else {
-      showSnackBar("Error: Could not connect to Server", isError: true);
+      }
     }
+    onSave(map);
+
+    // Map<String, dynamic> serverData =
+    //     deviceAttri != null && deviceAttri.attributes != null
+    //         ? deviceAttri.attributes
+    //         : {"isPaused": isPaused};
+
+    // serverData["isPaused"] = isPaused;
+
+    // if (client.connectionStatus.state.name == 'connected') {
+    //   MQTT.publish(serverData).then((value) {
+    //     setState(() {});
+    //     if (value == false) {
+    //       showSnackBar("Error: try again after sometime", isError: true);
+    //     }
+    //   });
+    // } else {
+    //   showSnackBar("Error: Could not connect to Server", isError: true);
+    // }
+
     // isLoading = true;
     // RestServerApi()
     //     .addAttributesToDevice(context, widget.deviceData.deviceId, serverData)
@@ -460,19 +514,20 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
   }
 
   void onSave(Map<String, dynamic> result) {
-    isLoading = true;
-    setState(() {});
+    // isLoading = true;
+    // setState(() {});
+    result['isPaused'] = isPaused;
     if (client.connectionStatus.state.name == 'connected') {
       MQTT.publish(result).then((value) {
-        isLoading = false;
+        // isLoading = false;
         setState(() {});
         if (value == false) {
           showSnackBar("Error: try again after sometime", isError: true);
         }
       });
     } else {
-      isLoading = false;
-      setState(() {});
+      // isLoading = false;
+      // setState(() {});
       showSnackBar("Error: Could Connect to server", isError: true);
     }
   }
@@ -482,6 +537,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
       // sessionList.removeAt(index.elementAt(i) - i);
     }
 
+    result['isPaused'] = isPaused;
     deviceAttri.attributes = result;
     setState(() {});
 
@@ -503,7 +559,7 @@ class _SessionDataScreenState extends BaseState<SessionDataScreen> {
     } else {
       isLoading = false;
       setState(() {});
-      showSnackBar("Error: Could Connect to server", isError: true);
+      showSnackBar("Error: Could not Connect to server", isError: true);
     }
   }
 
