@@ -5,6 +5,7 @@ import 'package:smart_bell/amplifyconfiguration.dart';
 import 'package:smart_bell/dao/LoginResponse.dart';
 import 'package:smart_bell/dao/UserInfoData.dart';
 import 'package:smart_bell/net/RestServerApi.dart';
+import 'package:smart_bell/screen/HomeScreen.dart';
 import 'package:smart_bell/screen/MainPage.dart';
 import 'package:smart_bell/screen/RegisterationPage.dart';
 import 'package:smart_bell/ui/BaseState.dart';
@@ -41,6 +42,7 @@ class _LoginPageState extends BaseState<LoginPage> {
   void initState() {
     super.initState();
     Future.delayed(Duration.zero, _configureAmplify);
+    checkSession();
   }
 
   Future<void> _configureAmplify() async {
@@ -298,7 +300,11 @@ class _LoginPageState extends BaseState<LoginPage> {
         Navigators.pushReplacement(context, ShowCase());
         showSnackBar(response['message']);
       } else {
-        showSnackBar(response['message'], isError: true);
+        if (response['message'] == 'There is already a user signed in.') {
+          Navigators.push(context, ShowCase());
+        } else {
+          showSnackBar(response['message'], isError: true);
+        }
       }
     });
   }

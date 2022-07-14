@@ -342,6 +342,31 @@ class RestServerApi {
     }
   }
 
+  static Future<dynamic> passwordResetWithAmplify(String email) async {
+    try {
+      final result = await Amplify.Auth.resetPassword(
+        username: email,
+      );
+      return {
+        'status': true,
+        'message': 'Confirmation code has been sent to the email'
+      };
+    } on AmplifyException catch (e) {
+      return {'status': false, 'message': e.message};
+    }
+  }
+
+  static Future<dynamic> passwordResetVerifyWithAmplify(
+      String email, String password, String code) async {
+    try {
+      final result = await Amplify.Auth.confirmResetPassword(
+          username: email, newPassword: password, confirmationCode: code);
+      return {'status': true, 'message': 'Password Reset Successfully'};
+    } on AmplifyException catch (e) {
+      return {'status': false, 'message': e.message};
+    }
+  }
+
   ///////////////////////////////////////////////////////////////////////////////////////
   Future<AppLoginResponse> login(
       BuildContext context, String email, password) async {

@@ -1,4 +1,5 @@
 import 'package:smart_bell/net/RestServerApi.dart';
+import 'package:smart_bell/screen/ResetPasswordScreen.dart';
 import 'package:smart_bell/ui/BaseState.dart';
 import 'package:smart_bell/utilities/Extensions.dart';
 import 'package:smart_bell/utilities/TextStyles.dart';
@@ -50,7 +51,7 @@ class _ForgotPasswordScreenState extends BaseState<ForgotPasswordScreen> {
     Widget signInMessaage = Align(
       alignment: Alignment.topLeft,
       child: Text(
-        'We just need for registered Email',
+        'Please enter your registered Email',
         style: TextStyles.white18Medium,
       ),
     );
@@ -80,13 +81,13 @@ class _ForgotPasswordScreenState extends BaseState<ForgotPasswordScreen> {
                       height: 2.h,
                     ),
                     Padding(
-                      padding:  EdgeInsets.symmetric(
-                          vertical: 1.h, horizontal: 4.h),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.h),
                       child: loginText,
                     ),
                     Padding(
-                      padding:  EdgeInsets.symmetric(
-                          vertical: 1.h, horizontal: 4.h),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.h),
                       child: signInMessaage,
                     ),
                     Card(
@@ -96,13 +97,12 @@ class _ForgotPasswordScreenState extends BaseState<ForgotPasswordScreen> {
                       color: Colors.white,
                       child: Padding(
                         padding:
-                        EdgeInsets.only(left: 2.h, top: 2.h, right: 2.h),
+                            EdgeInsets.only(left: 2.h, top: 2.h, right: 2.h),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           // direction: Axis.vertical,
                           children: [
-
                             EmailTextField(
                               controller: email,
                               isValidate: isEmailValidate,
@@ -118,7 +118,6 @@ class _ForgotPasswordScreenState extends BaseState<ForgotPasswordScreen> {
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
@@ -135,22 +134,42 @@ class _ForgotPasswordScreenState extends BaseState<ForgotPasswordScreen> {
         setState(() {
           isLoading = true;
         });
-        RestServerApi().resetPassword(context, this.email.text).then((value) {
-          if (value is bool && value) {
-            showSnackBar('Password reset link was successfully sent!');
 
-            this.email.text = "";
-            isEmailValidate = true;
-            setState(() {});
-          } else {
-            showSnackBar((value is String)
-                ? value.toString()
-                : 'Please check Email Id or try again later.',isError: true);
-          }
+        RestServerApi.passwordResetWithAmplify(this.email.text).then((value) {
           setState(() {
             isLoading = false;
           });
+          if (value['status'] == false) {
+            showSnackBar(
+                (value is String)
+                    ? value.toString()
+                    : 'Please check Email Id or try again later.',
+                isError: true);
+          } else {
+            showSnackBar(value['message']);
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => ResetPasswordScreen(email: email)));
+          }
         });
+
+        // RestServerApi().resetPassword(context, this.email.text).then((value) {
+        //   if (value is bool && value) {
+        //     showSnackBar('Password reset link was successfully sent!');
+
+        //     this.email.text = "";
+        //     isEmailValidate = true;
+        //     setState(() {});
+        //   } else {
+        //     showSnackBar((value is String)
+        //         ? value.toString()
+        //         : 'Please check Email Id or try again later.',isError: true);
+        //   }
+        //   setState(() {
+        //     isLoading = false;
+        //   });
+        // });
       } else {
         setState(() {
           isEmailValidate = false;

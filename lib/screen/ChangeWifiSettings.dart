@@ -35,12 +35,17 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
     if (Platform.isAndroid) {
       WiFiForIoTPlugin.forceWifiUsage(false);
     }
+    getUsername();
     getDeviceInformation();
     super.initState();
   }
 
   getUsername() async {
-    return await CommonUtil.getCurrentLoggedInUsername();
+    CommonUtil.getCurrentLoggedInUsername().then((username) {
+      setState(() {
+        Username = username;
+      });
+    });
   }
 
   getDeviceInformation() async {
@@ -209,7 +214,10 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
                           ),
                           onPressed: () {
                             Navigators.pushReplacement(
-                                context, TurnOnResetButton());
+                                context,
+                                TurnOnResetButton(
+                                  Username: Username,
+                                ));
                           },
                         ),
                       ),
