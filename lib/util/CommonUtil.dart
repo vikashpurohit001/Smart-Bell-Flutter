@@ -171,12 +171,14 @@ class CommonUtil {
 
   ////////////////////////////////////////////////////////////////////////////////////
   static Future<Map<String, String>> getCurrentUser() async {
-    List<AuthUserAttribute> info = await Amplify.Auth.fetchUserAttributes();
-    Map<String, String> user = {};
-    info.forEach((element) {
-      user[element.userAttributeKey.toString()] = element.value;
-    });
-    return user;
+    try {
+      List<AuthUserAttribute> info = await Amplify.Auth.fetchUserAttributes();
+      Map<String, String> user = {};
+      info.forEach((element) {
+        user[element.userAttributeKey.toString()] = element.value;
+      });
+      return user;
+    } catch (e) {}
   }
 
   static String getUserNameFromEmail(String email) {

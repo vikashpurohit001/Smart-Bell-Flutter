@@ -35,16 +35,14 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
     if (Platform.isAndroid) {
       WiFiForIoTPlugin.forceWifiUsage(false);
     }
-    getUsername();
     getDeviceInformation();
     super.initState();
   }
 
-  getUsername() async {
-    CommonUtil.getCurrentLoggedInUsername().then((username) {
-      setState(() {
-        Username = username;
-      });
+  Future<dynamic> getUsername() async {
+    String username = await CommonUtil.getCurrentLoggedInUsername();
+    setState(() {
+      Username = username;
     });
   }
 
@@ -53,12 +51,13 @@ class _DeviceListToChangeWifiState extends BaseState<DeviceListToChangeWifi> {
       isLoading = true;
       isNoInternet = false;
     });
+
+    await getUsername();
     await isInternetAvailable(onResult: (isInternet) async {
       if (isInternet) {
         String name = await CommonUtil.getCurrentLoggedInUsername();
         RestServerApi.getBellDeviceList(name).then((value) {
           isLoading = false;
-          print(value);
           if (value != null && value is List) {
             _data = value;
           }
