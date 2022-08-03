@@ -187,7 +187,9 @@ class CommonUtil {
 
   static Future<String> getCurrentLoggedInUsername() async {
     AuthUser info = await Amplify.Auth.getCurrentUser();
-    return info.username.split('@')[0];
+    String name = info.username.split('@')[0];
+    name = name.replaceAll('.', '');
+    return name;
   }
 
   static Future<String> generateDeviceName(String name) async {
